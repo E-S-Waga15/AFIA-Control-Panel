@@ -45,7 +45,7 @@ export function Login({ onLogin }: LoginProps) {
 
       // عرض التوست
       toast(<CustomToastContent />, {
-        position: "top-center", 
+        position: "top-center",
         autoClose: 3000,
         hideProgressBar: false,
         closeOnClick: true,
@@ -69,7 +69,7 @@ export function Login({ onLogin }: LoginProps) {
           <CardTitle className="text-2xl font-bold text-primary">
             {t('app.title')}
           </CardTitle>
-          <p className="text-muted-foreground">Healthcare Management System</p>
+          <p className="text-muted-foreground">مؤسسة ميدلايف الطبية</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -113,10 +113,13 @@ export function Login({ onLogin }: LoginProps) {
           </form>
 
           <div className="mt-6 p-4 bg-muted rounded-lg">
-            <p className="text-sm font-medium mb-2">Demo Credentials:</p>
+            <p className="text-sm font-medium mb-2">بيانات تجريبية:</p>
             <div className="text-xs space-y-1">
               <p>
-                <strong>Admin:</strong> admin / admin2004
+                <strong>اسم المستخدم:</strong> admin 
+              </p>
+              <p>
+                <strong>كلمة المرور:</strong>  admin2004
               </p>
             </div>
           </div>
