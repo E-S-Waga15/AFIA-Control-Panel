@@ -28,21 +28,20 @@ import {
 } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import { Badge } from "./ui/badge";
-import { ImageUpload } from './ui/image-upload';
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { MedicalHistory } from "./medical-history";
 import { useLanguage } from "../contexts/LanguageContext";
-import { RTLSelect } from "./ui/rtl-select";
 import { RTLDialog } from "./ui/rtl-dialog";
+import { RTLSelect } from "./ui/rtl-select";
+import { ImageUpload } from './ui/image-upload';
 import { toast } from 'react-toastify';
 import { fetchGovernorates } from "../store/slices/governoratesSlice";
 import { fetchSpecialties } from "../store/slices/specialtiesSlice";
 import { registerUser, toggleUserStatusAPI } from "../store/slices/userSlice";
 import { fetchUsers } from "../store/slices/usersDisplaySlice";
 import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { FaCheckCircle } from 'react-icons/fa';
+import "./../styles/responsive-utils.css";
 type UserType = "doctor" | "patient" | "pharmacist";
 type AccountStatus = "active" | "inactive";
 
@@ -73,6 +72,7 @@ const genders = ["male", "female"];
 export function UserManagement() {
   const { t, isRTL } = useLanguage();
   const dispatch = useDispatch();
+  const isMobile = window.innerWidth < 768;
   const specialtiesData = useSelector((state) => (state as any).specialties.specialties);
   const specialtiesLoading = useSelector((state) => (state as any).specialties.loading);
   const governoratesLoading = useSelector((state) => (state as any).governorates.loading);
@@ -127,7 +127,7 @@ export function UserManagement() {
 
   // جلب البيانات من API عند تحميل الكومبوننت وعند تغيير الفلتر
   useEffect(() => {
-    (dispatch as any)(fetchUsers(selectedAccountTypeFilter || 'doctor'));
+    (dispatch as any)(fetchUsers(selectedAccountTypeFilter ?? 'doctor'));
   }, [dispatch, selectedAccountTypeFilter]);
 
   // جلب المحافظات والاختصاصات عند تحميل الكومبوننت
@@ -381,7 +381,7 @@ export function UserManagement() {
         });
 
         // إعادة جلب بيانات المستخدمين لتحديث القائمة
-        (dispatch as any)(fetchUsers(selectedAccountTypeFilter || 'doctor'));
+        (dispatch as any)(fetchUsers(selectedAccountTypeFilter ?? 'doctor'));
       } else {
         // فشل التبديل - رسالة خطأ من الـ API response
         const errorMessage = result.payload?.message || result.payload || "حدث خطأ أثناء تغيير حالة المستخدم";
@@ -473,13 +473,11 @@ export function UserManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-4">
+      <div className="flex gap-4 ">
         <RTLDialog
           open={isAddModalOpen}
           onOpenChange={setIsAddModalOpen}
           title={editingUser ? t('users.editUser') : t('users.addUser')}
-          maxWidth="max-w-2xl"
-          className="max-h-[90vh] overflow-y-auto"
           trigger={
             <Button
               onClick={() => openAddModal("doctor")}
@@ -500,7 +498,7 @@ export function UserManagement() {
             </div>
           )}
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             {!editingUser && (
               <div>
                 <Label>{t('users.accountType')}</Label>
@@ -872,7 +870,7 @@ export function UserManagement() {
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="mobile-padding">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className={`w-5 h-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
@@ -897,7 +895,7 @@ export function UserManagement() {
             <div className="flex items-end gap-2">
               <Button onClick={() => {
                 // جلب البيانات حسب الفلتر المحدد
-                (dispatch as any)(fetchUsers(selectedAccountTypeFilter || 'doctor'));
+                (dispatch as any)(fetchUsers(selectedAccountTypeFilter ?? 'doctor'));
               }}>{t('common.apply')}</Button>
               <Button variant="outline" onClick={() => {
                 setSelectedAccountTypeFilter("doctor");
@@ -908,141 +906,280 @@ export function UserManagement() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="mobile-padding">
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.fullName')}</TableHead>
-                <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.phone')}</TableHead>
-                <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.governorate')}</TableHead>
-                <TableHead className={isRTL ? 'text-right' : 'text-left'}>
-                  {selectedAccountTypeFilter === 'patient' ? t('users.nationalId') :
-                    selectedAccountTypeFilter === 'pharmacist' ? t('users.pharmacyName') :
-                      t('users.specialties')}
-                </TableHead>
-                <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.username')}</TableHead>
-                <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.status')}</TableHead>
-                <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          {isMobile ? (
+            // Mobile Cards View
+            <div className="space-y-4">
               {usersLoading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
-                    <div className="flex items-center justify-center gap-2">
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>جاري تحميل المستخدمين...</span>
-                    </div>
-                  </TableCell>
-                </TableRow>
+                <div className="flex items-center justify-center py-8">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>جاري تحميل المستخدمين...</span>
+                  </div>
+                </div>
               ) : users.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    لا توجد مستخدمين من هذا النوع
-                  </TableCell>
-                </TableRow>
+                <div className="text-center py-8 text-muted-foreground">
+                  لا توجد مستخدمين من هذا النوع
+                </div>
               ) : (
                 users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>{user.fullName}</TableCell>
-                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>{user.phone}</TableCell>
-                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                      {user.governorate_id ? (
-                        <span>
-                          {isRTL
-                            ? governorates.find(g => g.id === user.governorate_id)?.nameAr || user.governorate
-                            : governorates.find(g => g.id === user.governorate_id)?.nameEn || user.governorate
-                          }
-                        </span>
-                      ) : user.governorate && (
-                        <span>
-                          {isRTL
-                            ? governorates.find(g => g.nameEn === user.governorate || g.nameAr === user.governorate)?.nameAr || user.governorate
-                            : governorates.find(g => g.nameEn === user.governorate || g.nameAr === user.governorate)?.nameEn || user.governorate
-                          }
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                      {selectedAccountTypeFilter === 'patient' ? (
-                        user.nationalId || t('users.noNationalId')
-                      ) : selectedAccountTypeFilter === 'pharmacist' ? (
-                        user.pharmacy_name || t('users.noPharmacy')
-                      ) : (
-                        user.specialties && user.specialties.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                           {user.specialties.map((specialty, index) => (
-    <Badge
-        key={specialty.id || index}
-        variant="outline"
-        // 🚀 أضف علامة "!" لفرض تطبيق الألوان
-        className="p-1 my-1 bg-primary/10 hover:bg-primary/20 text-primary"
-    >
-        {specialty.name || `تخصص ${specialty.id}`}
-    </Badge>
-))}
-                           
-                          </div>
-                        ) : (
-                          t('users.noSpecialties')
-                        )
-                      )}
-                    </TableCell>
-                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                      {user.username}
-                    </TableCell>
-                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                      <div className={`flex items-center gap-2 cursor-pointer`} onClick={() => confirmToggleStatus(user.id, user.accountStatus)}
-                        title={user.accountStatus === "active" ? t('users.deactivate') : t('users.activate')}>
-                        <Badge
-                          variant={
-                            user.accountStatus === "active"
-                              ? "default"
-                              : "destructive"
-                          }
-                        >
-                          {user.accountStatus === "active" ? (
-                            <CheckCircle className="w-6 h-6 text-green-500" />
-                          ) : (
-                            <XCircle className="w-6 h-6 text-red-500" />
-                          )}
-                          {user.accountStatus === 'active' ? t('users.active') : t('users.inactive')}
-                        </Badge>
+                  <Card key={user.id} className="mobile-padding">
+                    <CardContent className="p-0 space-y-3">
+                      <div className="mobile-flex-between">
+                        <div>
+                          <h3 className="mobile-heading text-primary">{user.fullName}</h3>
+                          <p className="mobile-text-sm text-muted-foreground">@{user.username}</p>
+                        </div>
+                        <div className={`cursor-pointer`} onClick={() => confirmToggleStatus(user.id, user.accountStatus)}
+                          title={user.accountStatus === "active" ? t('users.deactivate') : t('users.activate')}>
+                          <Badge
+                            variant={
+                              user.accountStatus === "active"
+                                ? "default"
+                                : "destructive"
+                            }
+                            className="mobile-text-sm"
+                          >
+                            {user.accountStatus === "active" ? (
+                              <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
+                            ) : (
+                              <XCircle className="w-4 h-4 text-red-500 mr-1" />
+                            )}
+                            {user.accountStatus === 'active' ? t('users.active') : t('users.inactive')}
+                          </Badge>
+                        </div>
                       </div>
-                    </TableCell>
-                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                      <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+
+                      <div className="space-y-2">
+                        <div className="mobile-flex-between">
+                          <span className="mobile-text-sm text-muted-foreground">{t('users.phone')}:</span>
+                          <span className="mobile-text-sm">{user.phone}</span>
+                        </div>
+
+                        <div className="mobile-flex-between">
+                          <span className="mobile-text-sm text-muted-foreground">{t('users.governorate')}:</span>
+                          <span className="mobile-text-sm">
+                            {user.governorate_id ? (
+                              <span>
+                                {isRTL
+                                  ? governorates.find(g => g.id === user.governorate_id)?.nameAr || user.governorate
+                                  : governorates.find(g => g.id === user.governorate_id)?.nameEn || user.governorate
+                                }
+                              </span>
+                            ) : user.governorate && (
+                              <span>
+                                {isRTL
+                                  ? governorates.find(g => g.nameEn === user.governorate || g.nameAr === user.governorate)?.nameAr || user.governorate
+                                  : governorates.find(g => g.nameEn === user.governorate || g.nameAr === user.governorate)?.nameEn || user.governorate
+                                }
+                              </span>
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="mobile-flex-between">
+                          <span className="mobile-text-sm text-muted-foreground">
+                            {selectedAccountTypeFilter === 'patient' ? t('users.nationalId') :
+                              selectedAccountTypeFilter === 'pharmacist' ? t('users.pharmacyName') :
+                                t('users.specialties')}:
+                          </span>
+                          <span className="mobile-text-sm">
+                            {selectedAccountTypeFilter === 'patient' ? (
+                              user.nationalId || t('users.noNationalId')
+                            ) : selectedAccountTypeFilter === 'pharmacist' ? (
+                              user.pharmacy_name || t('users.noPharmacy')
+                            ) : (
+                              user.specialties && user.specialties.length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {user.specialties.map((specialty, index) => (
+                                    <Badge
+                                      key={specialty.id || index}
+                                      variant="outline"
+                                      className="mobile-text-sm p-1 bg-primary/10 hover:bg-primary/20 text-primary"
+                                    >
+                                      {specialty.name || `تخصص ${specialty.id}`}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              ) : (
+                                t('users.noSpecialties')
+                              )
+                            )}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mobile-flex-center mobile-gap">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => openEditModal(user)}
+                          className="mobile-button"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit className="w-4 h-4 mr-1" />
+                          {t('common.edit')}
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => setShowMedicalHistory(user)}
-                          className="bg-primary/10 hover:bg-primary/20 text-primary"
+                          className="mobile-button bg-primary/10 hover:bg-primary/20 text-primary"
                         >
-                          <History className="w-4 h-4" />
+                          <History className="w-4 h-4 mr-1" />
+                          {t('users.medicalHistory')}
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => deleteUser(user.id)}
+                          className="mobile-button"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          {t('common.delete')}
                         </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          ) : (
+            // Desktop Table View - existing code
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.fullName')}</TableHead>
+                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.phone')}</TableHead>
+                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.governorate')}</TableHead>
+                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>
+                    {selectedAccountTypeFilter === 'patient' ? t('users.nationalId') :
+                      selectedAccountTypeFilter === 'pharmacist' ? t('users.pharmacyName') :
+                        t('users.specialties')}
+                  </TableHead>
+                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.username')}</TableHead>
+                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.status')}</TableHead>
+                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {usersLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>جاري تحميل المستخدمين...</span>
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : users.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      لا توجد مستخدمين من هذا النوع
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className={isRTL ? 'text-right' : 'text-left'}>{user.fullName}</TableCell>
+                      <TableCell className={isRTL ? 'text-right' : 'text-left'}>{user.phone}</TableCell>
+                      <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                        {user.governorate_id ? (
+                          <span>
+                            {isRTL
+                              ? governorates.find(g => g.id === user.governorate_id)?.nameAr || user.governorate
+                              : governorates.find(g => g.id === user.governorate_id)?.nameEn || user.governorate
+                            }
+                          </span>
+                        ) : user.governorate && (
+                          <span>
+                            {isRTL
+                              ? governorates.find(g => g.nameEn === user.governorate || g.nameAr === user.governorate)?.nameAr || user.governorate
+                              : governorates.find(g => g.nameEn === user.governorate || g.nameAr === user.governorate)?.nameEn || user.governorate
+                            }
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                        {selectedAccountTypeFilter === 'patient' ? (
+                          user.nationalId || t('users.noNationalId')
+                        ) : selectedAccountTypeFilter === 'pharmacist' ? (
+                          user.pharmacy_name || t('users.noPharmacy')
+                        ) : (
+                          user.specialties && user.specialties.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                             {user.specialties.map((specialty, index) => (
+      <Badge
+          key={specialty.id || index}
+          variant="outline"
+          className="p-1 my-1 bg-primary/10 hover:bg-primary/20 text-primary"
+      >
+          {specialty.name || `تخصص ${specialty.id}`}
+      </Badge>
+))}
+
+                            </div>
+                          ) : (
+                            t('users.noSpecialties')
+                          )
+                        )}
+                      </TableCell>
+                      <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                        {user.username}
+                      </TableCell>
+                      <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                        <div className={`flex items-center gap-2 cursor-pointer`} onClick={() => confirmToggleStatus(user.id, user.accountStatus)}
+                          title={user.accountStatus === "active" ? t('users.deactivate') : t('users.activate')}>
+                          <Badge
+                            variant={
+                              user.accountStatus === "active"
+                                ? "default"
+                                : "destructive"
+                            }
+                          >
+                            {user.accountStatus === "active" ? (
+                              <CheckCircle className="w-6 h-6 text-green-500" />
+                            ) : (
+                              <XCircle className="w-6 h-6 text-red-500" />
+                            )}
+                            {user.accountStatus === 'active' ? t('users.active') : t('users.inactive')}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                        <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditModal(user)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowMedicalHistory(user)}
+                            className="bg-primary/10 hover:bg-primary/20 text-primary"
+                          >
+                            <History className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deleteUser(user.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
+  
       </Card>
 
       {/* Medical History Dialog */}

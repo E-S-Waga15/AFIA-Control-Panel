@@ -8,7 +8,6 @@ import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
 import { Plus, Edit, Trash2, Upload, Heart, Brain, Eye, Stethoscope, Baby, Bone } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { RTLSelect } from './ui/rtl-select';
 import { ImageUpload } from './ui/image-upload';
 import { RTLDialog } from './ui/rtl-dialog';
 import { toast } from 'react-toastify';

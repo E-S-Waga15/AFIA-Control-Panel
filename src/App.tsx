@@ -17,6 +17,7 @@ import {
   SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton,
   SidebarMenuItem, SidebarProvider, SidebarTrigger
 } from './components/ui/sidebar';
+import { RTLSidebar, RTLSidebarTrigger } from './components/ui/rtl-sidebar';
 
 import { Button } from './components/ui/button';
 import { Home, Users, Calendar, Pill, Settings, Star, LogOut } from 'lucide-react';
@@ -75,11 +76,11 @@ function DashboardLayout({ onLogout, currentUser }) {
   return (
     <SidebarProvider defaultOpen={true}>
       <div className={`min-h-screen flex w-full bg-background ${isRTL ? 'flex-row-reverse' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
-        <Sidebar className={isRTL ? 'right-0' : 'left-0'}>
-          <SidebarHeader className="p-4">
-            <div className="flex flex-col space-y-2">
-              <h2 className="text-lg font-semibold text-primary">{t('app.title')}</h2>
-              <div className="text-sm text-muted-foreground">
+        <RTLSidebar className={`${isRTL ? 'right-0' : 'left-0'} mobile-padding`}>
+          <SidebarHeader className="mobile-padding">
+            <div className="mobile-flex-between mobile-gap">
+              <h2 className="mobile-heading text-primary">{t('app.title')}</h2>
+              <div className="mobile-text-sm text-muted-foreground">
                 <p>{t('common.welcome')}, {currentUser?.username}</p>
                 <p className="capitalize">{currentUser?.role}</p>
               </div>
@@ -117,12 +118,12 @@ function DashboardLayout({ onLogout, currentUser }) {
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
-        </Sidebar>
+        </RTLSidebar>
 
         <main className="flex-1 flex flex-col">
           <header className="border-b bg-card p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <SidebarTrigger />
+              <RTLSidebarTrigger />
               <h1 className="text-xl font-semibold text-primary">{getPageTitle()}</h1>
             </div>
             <LanguageToggle />
@@ -200,10 +201,10 @@ export default function App() {
   return (
     <Provider store={store}>
       <LanguageProvider>
-        <Router>
+        <Router basename={process.env.NODE_ENV === 'production' ? process.env.VITE_BASENAME || '' : ''}>
           <AppRoutes />
         </Router>
-        <ToastContainer />
+        <ToastContainer aria-label="Notifications" />
       </LanguageProvider>
     </Provider>
   );

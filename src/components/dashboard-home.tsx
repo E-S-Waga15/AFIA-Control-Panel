@@ -6,6 +6,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { Download, TrendingUp, Users, Calendar, Pill, Building2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { RTLSelect } from './ui/rtl-select';
+import "../styles/responsive-utils.css";
 
 export function DashboardHome() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
@@ -67,14 +68,14 @@ export function DashboardHome() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="mobile-container mobile-margin">
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="mobile-flex-between mobile-gap mobile-margin">
         <div>
-          <h1 className="text-2xl font-bold text-primary">{t('dashboard.title')}</h1>
-          <p className="text-muted-foreground">{t('dashboard.subtitle')}</p>
+          <h1 className="mobile-heading text-primary">{t('dashboard.title')}</h1>
+          <p className="mobile-text-sm text-muted-foreground">{t('dashboard.subtitle')}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="mobile-flex-between mobile-gap">
           <RTLSelect
             value={selectedPeriod}
             onValueChange={setSelectedPeriod}
@@ -84,7 +85,7 @@ export function DashboardHome() {
             <SelectItem value="day">{t('dashboard.daily')}</SelectItem>
             <SelectItem value="month">{t('dashboard.monthly')}</SelectItem>
           </RTLSelect>
-          <Button onClick={handleExportReport} className="bg-primary hover:bg-primary/90">
+          <Button onClick={handleExportReport} className="mobile-button bg-primary hover:bg-primary/90">
             <Download className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
             {t('dashboard.exportReport')}
           </Button>
@@ -92,57 +93,57 @@ export function DashboardHome() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('dashboard.totalAppointments')}</CardTitle>
+      <div className="mobile-grid-4 mobile-gap mobile-margin">
+        <Card className="mobile-padding">
+          <CardHeader className="mobile-flex-between mobile-gap">
+            <CardTitle className="mobile-text-sm font-medium">{t('dashboard.totalAppointments')}</CardTitle>
             <Calendar className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">{totalStats.totalAppointments.toLocaleString()}</div>
-            <div className="flex items-center text-xs text-green-600">
+            <div className="mobile-heading text-primary">{totalStats.totalAppointments.toLocaleString()}</div>
+            <div className="mobile-flex-center mobile-text-sm text-green-600">
               <TrendingUp className={`w-3 h-3 ${isRTL ? 'ml-1' : 'mr-1'}`} />
               {totalStats.appointmentGrowth} {t('dashboard.fromLastMonth')}
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('dashboard.totalPatients')}</CardTitle>
+        <Card className="mobile-padding">
+          <CardHeader className="mobile-flex-between mobile-gap">
+            <CardTitle className="mobile-text-sm font-medium">{t('dashboard.totalPatients')}</CardTitle>
             <Users className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">{totalStats.totalPatients.toLocaleString()}</div>
-            <div className="flex items-center text-xs text-green-600">
+            <div className="mobile-heading text-primary">{totalStats.totalPatients.toLocaleString()}</div>
+            <div className="mobile-flex-center mobile-text-sm text-green-600">
               <TrendingUp className={`w-3 h-3 ${isRTL ? 'ml-1' : 'mr-1'}`} />
               {totalStats.patientGrowth} {t('dashboard.fromLastMonth')}
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('dashboard.activeDoctors')}</CardTitle>
+        <Card className="mobile-padding">
+          <CardHeader className="mobile-flex-between mobile-gap">
+            <CardTitle className="mobile-text-sm font-medium">{t('dashboard.activeDoctors')}</CardTitle>
             <Users className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">{totalStats.totalDoctors}</div>
-            <div className="flex items-center text-xs text-green-600">
+            <div className="mobile-heading text-primary">{totalStats.totalDoctors}</div>
+            <div className="mobile-flex-center mobile-text-sm text-green-600">
               <TrendingUp className={`w-3 h-3 ${isRTL ? 'ml-1' : 'mr-1'}`} />
               {totalStats.doctorGrowth} {t('dashboard.fromLastMonth')}
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('dashboard.partnerPharmacies')}</CardTitle>
+        <Card className="mobile-padding">
+          <CardHeader className="mobile-flex-between mobile-gap">
+            <CardTitle className="mobile-text-sm font-medium">{t('dashboard.partnerPharmacies')}</CardTitle>
             <Building2 className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">{totalStats.totalPharmacies}</div>
-            <div className="flex items-center text-xs text-green-600">
+            <div className="mobile-heading text-primary">{totalStats.totalPharmacies}</div>
+            <div className="mobile-flex-center mobile-text-sm text-green-600">
               <TrendingUp className={`w-3 h-3 ${isRTL ? 'ml-1' : 'mr-1'}`} />
               {totalStats.pharmacyGrowth} {t('dashboard.fromLastMonth')}
             </div>
@@ -151,9 +152,9 @@ export function DashboardHome() {
       </div>
 
       {/* Chart Section */}
-      <Card>
+      <Card className="mobile-padding mobile-margin">
         <CardHeader>
-          <CardTitle className="text-primary">
+          <CardTitle className="mobile-heading text-primary">
             {selectedPeriod === 'day' ? t('dashboard.daily') : t('dashboard.monthly')} {t('dashboard.statisticsTrends')}
           </CardTitle>
         </CardHeader>
@@ -250,51 +251,51 @@ export function DashboardHome() {
       </Card>
 
       {/* Additional Statistics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+      <div className="mobile-grid-2 mobile-gap mobile-margin">
+        <Card className="mobile-padding">
           <CardHeader>
-            <CardTitle className="text-primary">{t('dashboard.recentActivity')}</CardTitle>
+            <CardTitle className="mobile-heading text-primary">{t('dashboard.recentActivity')}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm">{t('dashboard.newPatientRegistrationsToday')}</span>
-              <span className="font-semibold text-primary">23</span>
+          <CardContent className="mobile-space-y">
+            <div className="mobile-flex-between">
+              <span className="mobile-text-sm">{t('dashboard.newPatientRegistrationsToday')}</span>
+              <span className="mobile-heading text-primary">23</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm">{t('dashboard.appointmentsScheduledToday')}</span>
-              <span className="font-semibold text-primary">67</span>
+            <div className="mobile-flex-between">
+              <span className="mobile-text-sm">{t('dashboard.appointmentsScheduledToday')}</span>
+              <span className="mobile-heading text-primary">67</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm">{t('dashboard.prescriptionsFilledToday')}</span>
-              <span className="font-semibold text-primary">89</span>
+            <div className="mobile-flex-between">
+              <span className="mobile-text-sm">{t('dashboard.prescriptionsFilledToday')}</span>
+              <span className="mobile-heading text-primary">89</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm">{t('dashboard.averageRatingThisMonth')}</span>
-              <span className="font-semibold text-primary">4.7/5</span>
+            <div className="mobile-flex-between">
+              <span className="mobile-text-sm">{t('dashboard.averageRatingThisMonth')}</span>
+              <span className="mobile-heading text-primary">4.7/5</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="mobile-padding">
           <CardHeader>
-            <CardTitle className="text-primary">{t('dashboard.systemHealth')}</CardTitle>
+            <CardTitle className="mobile-heading text-primary">{t('dashboard.systemHealth')}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm">{t('dashboard.serverUptime')}</span>
-              <span className="font-semibold text-green-600">99.9%</span>
+          <CardContent className="mobile-space-y">
+            <div className="mobile-flex-between">
+              <span className="mobile-text-sm">{t('dashboard.serverUptime')}</span>
+              <span className="mobile-heading text-green-600">99.9%</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm">{t('dashboard.databasePerformance')}</span>
-              <span className="font-semibold text-green-600">{t('dashboard.excellent')}</span>
+            <div className="mobile-flex-between">
+              <span className="mobile-text-sm">{t('dashboard.databasePerformance')}</span>
+              <span className="mobile-heading text-green-600">{t('dashboard.excellent')}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm">{t('dashboard.activeUserSessions')}</span>
-              <span className="font-semibold text-primary">1,247</span>
+            <div className="mobile-flex-between">
+              <span className="mobile-text-sm">{t('dashboard.activeUserSessions')}</span>
+              <span className="mobile-heading text-primary">1,247</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm">{t('dashboard.dataBackupStatus')}</span>
-              <span className="font-semibold text-green-600">{t('dashboard.complete')}</span>
+            <div className="mobile-flex-between">
+              <span className="mobile-text-sm">{t('dashboard.dataBackupStatus')}</span>
+              <span className="mobile-heading text-green-600">{t('dashboard.complete')}</span>
             </div>
           </CardContent>
         </Card>

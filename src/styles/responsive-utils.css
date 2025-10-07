@@ -1,0 +1,212 @@
+/* Responsive utilities for mobile-first design */
+.mobile-modal {
+  position: fixed;
+  inset: 1.25rem; /* 20px */
+  max-width: calc(100% - 2.5rem); /* حساب المساحة المتبقية */
+}
+
+@media (min-width: 640px) {
+  .mobile-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 28rem; /* 448px */
+  }
+}
+
+.mobile-padding {
+  padding: 1.25rem; /* 20px */
+}
+
+@media (min-width: 640px) {
+  .mobile-padding {
+    padding: 1.5rem; /* 24px */
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-padding {
+    padding: 2rem; /* 32px */
+  }
+}
+
+.mobile-container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem; /* 16px */
+  padding-right: 1rem; /* 16px */
+}
+
+@media (min-width: 640px) {
+  .mobile-container {
+    padding-left: 1.5rem; /* 24px */
+    padding-right: 1.5rem; /* 24px */
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-container {
+    padding-left: 2rem; /* 32px */
+    padding-right: 2rem; /* 32px */
+  }
+}
+
+.mobile-grid-1 {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.mobile-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 640px) {
+  .mobile-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.mobile-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 640px) {
+  .mobile-grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.mobile-gap {
+  gap: 1rem; /* 16px */
+}
+
+@media (min-width: 640px) {
+  .mobile-gap {
+    gap: 1.5rem; /* 24px */
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-gap {
+    gap: 2rem; /* 32px */
+  }
+}
+
+.mobile-text-sm {
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.25rem; /* 20px */
+}
+
+@media (min-width: 640px) {
+  .mobile-text-sm {
+    font-size: 1rem; /* 16px */
+    line-height: 1.5rem; /* 24px */
+  }
+}
+
+.mobile-text-lg {
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.75rem; /* 28px */
+}
+
+@media (min-width: 640px) {
+  .mobile-text-lg {
+    font-size: 1.25rem; /* 20px */
+    line-height: 1.75rem; /* 28px */
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-text-lg {
+    font-size: 1.5rem; /* 24px */
+    line-height: 2rem; /* 32px */
+  }
+}
+
+.mobile-heading {
+  font-size: 1.25rem; /* 20px */
+  line-height: 1.75rem; /* 28px */
+  font-weight: 600;
+}
+
+@media (min-width: 640px) {
+  .mobile-heading {
+    font-size: 1.5rem; /* 24px */
+    line-height: 2rem; /* 32px */
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-heading {
+    font-size: 1.875rem; /* 30px */
+    line-height: 2.25rem; /* 36px */
+  }
+}
+
+.mobile-button {
+  padding: 0.5rem 0.75rem; /* 8px 12px */
+}
+
+@media (min-width: 640px) {
+  .mobile-button {
+    padding: 0.5rem 1rem; /* 8px 16px */
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-button {
+    padding: 0.75rem 1.5rem; /* 12px 24px */
+  }
+}
+
+.mobile-input {
+  width: 100%;
+  padding: 0.75rem 1rem; /* 12px 16px */
+}
+
+@media (min-width: 640px) {
+  .mobile-input {
+    padding: 1rem; /* 16px */
+  }
+}
+
+.mobile-margin {
+  margin-top: 1rem; /* 16px */
+  margin-bottom: 1rem; /* 16px */
+}
+
+@media (min-width: 640px) {
+  .mobile-margin {
+    margin-top: 1.5rem; /* 24px */
+    margin-bottom: 1.5rem; /* 24px */
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-margin {
+    margin-top: 2rem; /* 32px */
+    margin-bottom: 2rem; /* 32px */
+  }
+}
+
+.mobile-flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
