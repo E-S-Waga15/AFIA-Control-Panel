@@ -6,7 +6,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
-import { Plus, Edit, Trash2, Upload, Heart, Brain, Eye, Stethoscope, Baby, Bone } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload, Heart, Brain, Eye, Stethoscope, Baby, Bone, Loader } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { ImageUpload } from './ui/image-upload';
 import { RTLDialog } from './ui/rtl-dialog';
@@ -101,7 +101,7 @@ const getColorClass = (color: string) => {
 export function ServicesManagement() {
   const { t, isRTL } = useLanguage();
   const dispatch = useDispatch<AppDispatch>();
-
+  const isMobile = window.innerWidth < 768;
   // ✅ جلب الاختصاصات من Redux
   const { specialties, loading, error } = useSelector((state: RootState) => state.specialties);
   const { loading: addLoading, error: addError, success, message } = useSelector((state: RootState) => state.addSpecialty);
@@ -156,7 +156,7 @@ export function ServicesManagement() {
         draggable: true,
         theme: "light",
         onClose: () => {
-          
+
         }
       });
 
@@ -186,7 +186,7 @@ export function ServicesManagement() {
         draggable: true,
         theme: "light",
         onClose: () => {
-          
+
         }
       });
 
@@ -233,7 +233,7 @@ export function ServicesManagement() {
 
   const handleSpecialtySubmit = async () => {
     if (!specialtyForm.name.trim() || !specialtyForm.description.trim()) {
-      toast.error('يرجى ملء جميع الحقول المطلوبة',{
+      toast.error('يرجى ملء جميع الحقول المطلوبة', {
         position: "top-center",
       });
       return;
@@ -366,6 +366,7 @@ export function ServicesManagement() {
                 {t('specialties.addSpecialty')}
               </Button>
             }
+            maxWidth={isMobile ? "w-300px" : "max-w-4xl"}
           >
 
             <div className="space-y-4">
@@ -422,7 +423,10 @@ export function ServicesManagement() {
                   {t('common.cancel')}
                 </Button>
                 <Button onClick={handleSpecialtySubmit} disabled={addLoading}>
-                  {addLoading ? t('common.loading') : (editingSpecialty ? t('specialties.editSpecialty') : t('specialties.addSpecialty'))}
+                  {addLoading ? (<>
+                    <Loader className="w-4 h-4 animate-spin mr-2" />
+                    {t('common.loading')}
+                  </>) : (editingSpecialty ? t('specialties.editSpecialty') : t('specialties.addSpecialty'))}
                 </Button>
               </div>
             </div>

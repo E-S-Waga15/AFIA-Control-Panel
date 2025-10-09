@@ -8,17 +8,26 @@ export const registerUser = createAsyncThunk(
     try {
       const response = await axiosInstance.post('/register', userData);
 
-      if (response.data.success) {
+      // إعادة كامل الـ response للتحقق من success في المكون
+      if (response.data.success === true) {
         return {
-          message: response.data.message
+          success: true,
+          message: response.data.message,
+          data: response.data.data || null
         };
       } else {
-        return rejectWithValue(response.data.message || 'حدث خطأ أثناء إنشاء المستخدم');
+        return rejectWithValue({
+          success: false,
+          message: response.data.message || 'حدث خطأ أثناء إنشاء المستخدم',
+          data: response.data.data || null
+        });
       }
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || 'حدث خطأ في الشبكة أثناء إنشاء المستخدم'
-      );
+      return rejectWithValue({
+        success: false,
+        message: error.response?.data?.message || 'حدث خطأ في الشبكة أثناء إنشاء المستخدم',
+        data: error.response?.data?.data || null
+      });
     }
   }
 );
@@ -81,13 +90,13 @@ const userSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentUser = action.payload.user;
-        state.success = true;
+        state.currentUser = action.payload.data;
+        state.success = action.payload.success;
         state.error = null;
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message || 'حدث خطأ غير متوقع';
         state.success = false;
         state.currentUser = null;
       })

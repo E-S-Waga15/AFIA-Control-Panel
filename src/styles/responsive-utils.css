@@ -3,6 +3,8 @@
   position: fixed;
   inset: 1.25rem; /* 20px */
   max-width: calc(100% - 2.5rem); /* حساب المساحة المتبقية */
+  overflow-x: hidden; /* منع السحب الأفقي */
+  overflow-y: auto; /* السماح بالسحب العمودي */
 }
 
 @media (min-width: 640px) {
@@ -205,8 +207,102 @@
   justify-content: center;
 }
 
-.mobile-flex-between {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+/* منع السحب الأفقي على الشاشات الصغيرة */
+@media (max-width: 767px) {
+  body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  /* التأكد من أن جميع العناصر لا تتجاوز عرض الشاشة */
+  .space-y-6 {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* تحسين عرض الجدول على الموبايل */
+  .mobile-table-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* إخفاء السحب الأفقي للجداول */
+  .mobile-table-container::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .mobile-table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  .mobile-table-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 2px;
+  }
+
+  /* تحسين عرض البطاقات */
+  .mobile-card {
+    width: 100%;
+    max-width: 95%; /* تقليل العرض بنسبة 20% من 100% إلى 80% */
+    margin: 0 auto; /* توسيط البطاقة */
+   
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    transition: box-shadow 0.2s ease-in-out;
+  }
+
+  .mobile-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  /* تحسين عرض الأزرار في البطاقات */
+  .mobile-card .mobile-gap {
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  /* تحسين عرض النصوص الطويلة */
+  .mobile-text-ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* تحسين رأس البطاقة */
+  .mobile-card-header {
+    border-bottom: 1px solid hsl(var(--border));
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  /* تحسين قسم المعلومات */
+  .mobile-card-info {
+    margin-bottom: 1rem;
+  }
+
+  /* تحسين قسم الأزرار */
+  .mobile-card-actions {
+    border-top: 1px solid hsl(var(--border));
+    padding-top: 0.75rem;
+  }
+
+  /* منع خروج المودال خارج حدود الشاشة */
+  .mobile-modal {
+    max-width: 95vw !important;
+    margin: 10px !important;
+  }
+
+  /* تحسين عرض الفلاتر */
+  .mobile-filters {
+    padding: 1rem;
+  }
+
+  /* تحسين عرض الأزرار */
+  .mobile-button {
+    min-height: 44px;
+    padding: 0.5rem 1rem;
+  }
 }

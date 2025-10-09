@@ -12,6 +12,48 @@ export function DashboardHome() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const { t, isRTL } = useLanguage();
 
+  // كشف حجم الشاشة مع إعادة التقييم عند تغيير الحجم
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  // إعادة تقييم حجم الشاشة عند إعادة تحميل المكون
+  React.useEffect(() => {
+    const checkMobileOnLoad = () => {
+      const width = window.innerWidth;
+      setWindowWidth(width);
+      setIsMobile(width < 768);
+    };
+
+    // التحقق فوراً عند التحميل
+    checkMobileOnLoad();
+
+    // ثم التحقق مرة أخرى بعد تحميل المكون بالكامل
+    const timer = setTimeout(checkMobileOnLoad, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // إضافة مراقبة لحجم الشاشة مع إعادة التحقق الدوري
+  React.useEffect(() => {
+    let timeoutId;
+
+    const handleResize = () => {
+      const newWidth = window.innerWidth;
+      setWindowWidth(newWidth);
+      setIsMobile(newWidth < 768);
+    };
+
+    const debouncedResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(handleResize, 150);
+    };
+
+    window.addEventListener('resize', debouncedResize);
+    return () => {
+      window.removeEventListener('resize', debouncedResize);
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
   // Mock data for the chart
   const dailyData = [
     { date: '2024-01-01', appointments: 45, patients: 32, doctors: 8, pharmacies: 3 },
@@ -68,14 +110,14 @@ export function DashboardHome() {
   };
 
   return (
-    <div className="mobile-container mobile-margin">
+    <div className="w-full min-h-screen bg-gray-50">
       {/* Header Section */}
-      <div className="mobile-flex-between mobile-gap mobile-margin">
+      <div className="flex p-4 flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="mobile-heading text-primary">{t('dashboard.title')}</h1>
-          <p className="mobile-text-sm text-muted-foreground">{t('dashboard.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-primary">{t('dashboard.title')}</h1>
+          <p className="text-muted-foreground">{t('dashboard.subtitle')}</p>
         </div>
-        <div className="mobile-flex-between mobile-gap">
+        <div className="flex items-center gap-3">
           <RTLSelect
             value={selectedPeriod}
             onValueChange={setSelectedPeriod}
@@ -85,7 +127,7 @@ export function DashboardHome() {
             <SelectItem value="day">{t('dashboard.daily')}</SelectItem>
             <SelectItem value="month">{t('dashboard.monthly')}</SelectItem>
           </RTLSelect>
-          <Button onClick={handleExportReport} className="mobile-button bg-primary hover:bg-primary/90">
+          <Button onClick={handleExportReport} className="bg-primary hover:bg-primary/90">
             <Download className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
             {t('dashboard.exportReport')}
           </Button>
@@ -93,212 +135,219 @@ export function DashboardHome() {
       </div>
 
       {/* Summary Cards */}
-      <div className="mobile-grid-4 mobile-gap mobile-margin">
-        <Card className="mobile-padding">
-          <CardHeader className="mobile-flex-between mobile-gap">
-            <CardTitle className="mobile-text-sm font-medium">{t('dashboard.totalAppointments')}</CardTitle>
-            <Calendar className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="mobile-heading text-primary">{totalStats.totalAppointments.toLocaleString()}</div>
-            <div className="mobile-flex-center mobile-text-sm text-green-600">
-              <TrendingUp className={`w-3 h-3 ${isRTL ? 'ml-1' : 'mr-1'}`} />
-              {totalStats.appointmentGrowth} {t('dashboard.fromLastMonth')}
-            </div>
-          </CardContent>
-        </Card>
+      <div className="px-4 pb-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="bg-white shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t('dashboard.totalAppointments')}</CardTitle>
+              <Calendar className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-primary">{totalStats.totalAppointments.toLocaleString()}</div>
+              <div className="flex items-center text-xs text-green-600">
+                <TrendingUp className={`w-3 h-3 ${isRTL ? 'ml-1' : 'mr-1'}`} />
+                {totalStats.appointmentGrowth} {t('dashboard.fromLastMonth')}
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="mobile-padding">
-          <CardHeader className="mobile-flex-between mobile-gap">
-            <CardTitle className="mobile-text-sm font-medium">{t('dashboard.totalPatients')}</CardTitle>
-            <Users className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="mobile-heading text-primary">{totalStats.totalPatients.toLocaleString()}</div>
-            <div className="mobile-flex-center mobile-text-sm text-green-600">
-              <TrendingUp className={`w-3 h-3 ${isRTL ? 'ml-1' : 'mr-1'}`} />
-              {totalStats.patientGrowth} {t('dashboard.fromLastMonth')}
-            </div>
-          </CardContent>
-        </Card>
+          <Card className="bg-white shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t('dashboard.totalPatients')}</CardTitle>
+              <Users className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-primary">{totalStats.totalPatients.toLocaleString()}</div>
+              <div className="flex items-center text-xs text-green-600">
+                <TrendingUp className={`w-3 h-3 ${isRTL ? 'ml-1' : 'mr-1'}`} />
+                {totalStats.patientGrowth} {t('dashboard.fromLastMonth')}
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="mobile-padding">
-          <CardHeader className="mobile-flex-between mobile-gap">
-            <CardTitle className="mobile-text-sm font-medium">{t('dashboard.activeDoctors')}</CardTitle>
-            <Users className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="mobile-heading text-primary">{totalStats.totalDoctors}</div>
-            <div className="mobile-flex-center mobile-text-sm text-green-600">
-              <TrendingUp className={`w-3 h-3 ${isRTL ? 'ml-1' : 'mr-1'}`} />
-              {totalStats.doctorGrowth} {t('dashboard.fromLastMonth')}
-            </div>
-          </CardContent>
-        </Card>
+          <Card className="bg-white shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t('dashboard.activeDoctors')}</CardTitle>
+              <Users className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-primary">{totalStats.totalDoctors}</div>
+              <div className="flex items-center text-xs text-green-600">
+                <TrendingUp className={`w-3 h-3 ${isRTL ? 'ml-1' : 'mr-1'}`} />
+                {totalStats.doctorGrowth} {t('dashboard.fromLastMonth')}
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="mobile-padding">
-          <CardHeader className="mobile-flex-between mobile-gap">
-            <CardTitle className="mobile-text-sm font-medium">{t('dashboard.partnerPharmacies')}</CardTitle>
-            <Building2 className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="mobile-heading text-primary">{totalStats.totalPharmacies}</div>
-            <div className="mobile-flex-center mobile-text-sm text-green-600">
-              <TrendingUp className={`w-3 h-3 ${isRTL ? 'ml-1' : 'mr-1'}`} />
-              {totalStats.pharmacyGrowth} {t('dashboard.fromLastMonth')}
-            </div>
-          </CardContent>
-        </Card>
+          <Card className="bg-white shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t('dashboard.partnerPharmacies')}</CardTitle>
+              <Building2 className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-primary">{totalStats.totalPharmacies}</div>
+              <div className="flex items-center text-xs text-green-600">
+                <TrendingUp className={`w-3 h-3 ${isRTL ? 'ml-1' : 'mr-1'}`} />
+                {totalStats.pharmacyGrowth} {t('dashboard.fromLastMonth')}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Chart Section */}
-      <Card className="mobile-padding mobile-margin">
-        <CardHeader>
+      <Card>
+          <CardHeader>
           <CardTitle className="mobile-heading text-primary">
-            {selectedPeriod === 'day' ? t('dashboard.daily') : t('dashboard.monthly')} {t('dashboard.statisticsTrends')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-80" dir={isRTL ? 'rtl' : 'ltr'}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart 
-                data={chartData}
-                margin={{ top: 20, right: isRTL ? 30 : 5, left: isRTL ? 5 : 30, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="date" 
-                  tick={{ fontSize: 12,  dx: isRTL ? -18 : 0, dy:10, textAnchor: isRTL ? 'end' : 'middle' }}
-                  tickFormatter={(value) => {
-                    if (selectedPeriod === 'day') {
-                      const date = new Date(value);
-                      return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
-                    } else {
-                      // للعرض الشهري
-                      const date = new Date(value);
-                      return `${date.getMonth() + 1}-${date.getFullYear()}`;
-                    }
-                  }}
-                  reversed={isRTL}
-                />
-                <YAxis 
-                  tick={{ 
-                    fontSize: 12, 
-                    textAnchor: isRTL ? 'end' : 'start',
-                    dx: isRTL ? 5 : -30  // إضافة مسافة متساوية للغتين
-                  }} 
-                  orientation={isRTL ? 'right' : 'left'}
-                  width={isRTL ? 50 : 50}  // عرض ثابت للمحور
-                />
-                <Tooltip 
-                  labelFormatter={(value) => {
-                    
-                    if (selectedPeriod === 'day') {
-                      const date = new Date(value);
-                      return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
-                    } else {
-                      const date = new Date(value);
-                      return `${date.getMonth() + 1}-${date.getFullYear()}`;
-                    }
-                  }}
-                  contentStyle={{
-                    direction: isRTL ? 'rtl' : 'ltr',
-                    textAlign: isRTL ? 'right' : 'left'
-                  }}
-                />
-                <Legend 
-                  wrapperStyle={{
-                    direction: isRTL ? 'rtl' : 'ltr',
-                    textAlign: isRTL ? 'right' : 'left'
-                  }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="appointments" 
-                  stroke="#1e3561" 
-                  strokeWidth={3}
-                  name={t('dashboard.appointments')}
-                  dot={{ fill: '#1e3561', strokeWidth: 2, r: 4 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="patients" 
-                  stroke="#f9555c" 
-                  strokeWidth={2}
-                  name={t('dashboard.patients')}
-                  dot={{ fill: '#f9555c', strokeWidth: 2, r: 4 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="doctors" 
-                  stroke="#059669" 
-                  strokeWidth={2}
-                  name={t('dashboard.doctors')}
-                  dot={{ fill: '#059669', strokeWidth: 2, r: 4 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="pharmacies" 
-                  stroke="#7c3aed" 
-                  strokeWidth={2}
-                  name={t('dashboard.pharmacies')}
-                  dot={{ fill: '#7c3aed', strokeWidth: 2, r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
+              {selectedPeriod === 'day' ? t('dashboard.daily') : t('dashboard.monthly')} {t('dashboard.statisticsTrends')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+          <div
+           className={ "h-80"}
+           dir={isRTL ? 'rtl' : 'ltr'}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={chartData}
+                  margin={{ top: 10, right: isRTL ? 20 : 5, left: isRTL ? 5 : 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 12,  dx: isRTL ? -18 : 0, dy:10, textAnchor: isRTL ? 'end' : 'middle' }}
+                    tickFormatter={(value) => {
+                      if (selectedPeriod === 'day') {
+                        const date = new Date(value);
+                        return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
+                      } else {
+                        // للعرض الشهري
+                        const date = new Date(value);
+                        return `${date.getMonth() + 1}-${date.getFullYear()}`;
+                      }
+                    }}
+                    reversed={isRTL}
+                  />
+                  <YAxis
+                    tick={{
+                      fontSize: 12,
+                      textAnchor: isRTL ? 'end' : 'start',
+                      dx: isRTL ? 5 : -30  // إضافة مسافة متساوية للغتين
+                    }}
+                    orientation={isRTL ? 'right' : 'left'}
+                    width={isRTL ? 50 : 50}  // عرض ثابت للمحور
+                  />
+                  <Tooltip
+                    labelFormatter={(value) => {
+
+                      if (selectedPeriod === 'day') {
+                        const date = new Date(value);
+                        return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
+                      } else {
+                        const date = new Date(value);
+                        return `${date.getMonth() + 1}-${date.getFullYear()}`;
+                      }
+                    }}
+                    contentStyle={{
+                      direction: isRTL ? 'rtl' : 'ltr',
+                      textAlign: isRTL ? 'right' : 'left'
+                    }}
+                  />
+                  <Legend
+                    wrapperStyle={{
+                      direction: isRTL ? 'rtl' : 'ltr',
+                      textAlign: isRTL ? 'right' : 'left'
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="appointments"
+                    stroke="#1e3561"
+                    strokeWidth={3}
+                    name={t('dashboard.appointments')}
+                    dot={{ fill: '#1e3561', strokeWidth: 2, r: 4 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="patients"
+                    stroke="#f9555c"
+                    strokeWidth={2}
+                    name={t('dashboard.patients')}
+                    dot={{ fill: '#f9555c', strokeWidth: 2, r: 4 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="doctors"
+                    stroke="#059669"
+                    strokeWidth={2}
+                    name={t('dashboard.doctors')}
+                    dot={{ fill: '#059669', strokeWidth: 2, r: 4 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="pharmacies"
+                    stroke="#7c3aed"
+                    strokeWidth={2}
+                    name={t('dashboard.pharmacies')}
+                    dot={{ fill: '#7c3aed', strokeWidth: 2, r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
       </Card>
 
+<div className="px-4 pb-6"></div>
       {/* Additional Statistics */}
-      <div className="mobile-grid-2 mobile-gap mobile-margin">
-        <Card className="mobile-padding">
-          <CardHeader>
-            <CardTitle className="mobile-heading text-primary">{t('dashboard.recentActivity')}</CardTitle>
-          </CardHeader>
-          <CardContent className="mobile-space-y">
-            <div className="mobile-flex-between">
-              <span className="mobile-text-sm">{t('dashboard.newPatientRegistrationsToday')}</span>
-              <span className="mobile-heading text-primary">23</span>
-            </div>
-            <div className="mobile-flex-between">
-              <span className="mobile-text-sm">{t('dashboard.appointmentsScheduledToday')}</span>
-              <span className="mobile-heading text-primary">67</span>
-            </div>
-            <div className="mobile-flex-between">
-              <span className="mobile-text-sm">{t('dashboard.prescriptionsFilledToday')}</span>
-              <span className="mobile-heading text-primary">89</span>
-            </div>
-            <div className="mobile-flex-between">
-              <span className="mobile-text-sm">{t('dashboard.averageRatingThisMonth')}</span>
-              <span className="mobile-heading text-primary">4.7/5</span>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="px-4 pb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="bg-white shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-primary">{t('dashboard.recentActivity')}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm">{t('dashboard.newPatientRegistrationsToday')}</span>
+                <span className="font-semibold text-primary">23</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">{t('dashboard.appointmentsScheduledToday')}</span>
+                <span className="font-semibold text-primary">67</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">{t('dashboard.prescriptionsFilledToday')}</span>
+                <span className="font-semibold text-primary">89</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">{t('dashboard.averageRatingThisMonth')}</span>
+                <span className="font-semibold text-primary">4.7/5</span>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="mobile-padding">
-          <CardHeader>
-            <CardTitle className="mobile-heading text-primary">{t('dashboard.systemHealth')}</CardTitle>
-          </CardHeader>
-          <CardContent className="mobile-space-y">
-            <div className="mobile-flex-between">
-              <span className="mobile-text-sm">{t('dashboard.serverUptime')}</span>
-              <span className="mobile-heading text-green-600">99.9%</span>
-            </div>
-            <div className="mobile-flex-between">
-              <span className="mobile-text-sm">{t('dashboard.databasePerformance')}</span>
-              <span className="mobile-heading text-green-600">{t('dashboard.excellent')}</span>
-            </div>
-            <div className="mobile-flex-between">
-              <span className="mobile-text-sm">{t('dashboard.activeUserSessions')}</span>
-              <span className="mobile-heading text-primary">1,247</span>
-            </div>
-            <div className="mobile-flex-between">
-              <span className="mobile-text-sm">{t('dashboard.dataBackupStatus')}</span>
-              <span className="mobile-heading text-green-600">{t('dashboard.complete')}</span>
-            </div>
-          </CardContent>
-        </Card>
+          <Card className="bg-white shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-primary">{t('dashboard.systemHealth')}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm">{t('dashboard.serverUptime')}</span>
+                <span className="font-semibold text-green-600">99.9%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">{t('dashboard.databasePerformance')}</span>
+                <span className="font-semibold text-green-600">{t('dashboard.excellent')}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">{t('dashboard.activeUserSessions')}</span>
+                <span className="font-semibold text-primary">1,247</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">{t('dashboard.dataBackupStatus')}</span>
+                <span className="font-semibold text-green-600">{t('dashboard.complete')}</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

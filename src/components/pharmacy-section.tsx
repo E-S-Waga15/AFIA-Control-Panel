@@ -84,6 +84,33 @@ export function PharmacySection() {
   const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
+  // كشف حجم الشاشة مع إعادة التقييم عند تغيير الحجم
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      const newWidth = window.innerWidth;
+      setWindowWidth(newWidth);
+      setIsMobile(newWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // إعادة تقييم حجم الشاشة عند إعادة تحميل المكون
+  React.useEffect(() => {
+    const checkMobileOnLoad = () => {
+      setIsMobile(window.innerWidth < 768);
+      setWindowWidth(window.innerWidth);
+    };
+
+    // التحقق مرة أخرى بعد تحميل المكون بالكامل
+    const timer = setTimeout(checkMobileOnLoad, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   const viewDetails = (prescription: Prescription) => {
     setSelectedPrescription(prescription);
     setIsDetailsOpen(true);
@@ -137,46 +164,98 @@ export function PharmacySection() {
   const dispensedCount = prescriptions.filter(p => p.dispenseStatus === 'dispensed').length;
   const dispensedElsewhereCount = prescriptions.filter(p => p.dispenseStatus === 'dispensed-elsewhere').length;
 
+  // مكون عرض الكروت للموبايل
+  const MobilePrescriptionCards = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {prescriptions.map((prescription) => (
+        <Card key={prescription.id} className="bg-white shadow-sm">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg font-semibold text-primary">
+                {prescription.patientName}
+              </CardTitle>
+              <Badge variant={getStatusBadgeVariant(prescription.dispenseStatus)}>
+                {getStatusLabel(prescription.dispenseStatus)}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-muted-foreground">{t('appointments.doctorName')}:</span>
+                <span className="text-sm">{prescription.doctorName}</span>
+              </div>
+              <div className="space-y-1">
+                <div className="text-sm font-medium text-muted-foreground">{t('pharmacy.medication')}:</div>
+                <div className="text-sm">
+                  <div className="font-medium">{prescription.medicineName}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {prescription.dosage} - {prescription.quantity}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-muted-foreground">{t('pharmacy.prescribedDate')}:</span>
+                <span className="text-sm">{formatDate(prescription.prescribedDate)}</span>
+              </div>
+            </div>
+            <div className="pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => viewDetails(prescription)}
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <Eye className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                {t('pharmacy.viewDetails')}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+      <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'}`}>
+        <Card className="bg-white shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('pharmacy.title')}</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">{notDispensedCount}</div>
+            <div className={`font-bold text-destructive ${isMobile ? 'text-lg' : 'text-2xl'}`}>{notDispensedCount}</div>
             <p className="text-xs text-muted-foreground">{t('pharmacy.notDispensed')}</p>
           </CardContent>
         </Card>
-        
-        <Card>
+
+        <Card className="bg-white shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('pharmacy.dispensed')}</CardTitle>
             <Pill className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{dispensedCount}</div>
+            <div className={`font-bold text-green-600 ${isMobile ? 'text-lg' : 'text-2xl'}`}>{dispensedCount}</div>
             <p className="text-xs text-muted-foreground">{t('pharmacy.dispensed')}</p>
           </CardContent>
         </Card>
-        
-        <Card>
+
+        <Card className="bg-white shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('pharmacy.pharmacyName')}</CardTitle>
             <Pill className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{dispensedElsewhereCount}</div>
+            <div className={`font-bold text-blue-600 ${isMobile ? 'text-lg' : 'text-2xl'}`}>{dispensedElsewhereCount}</div>
             <p className="text-xs text-muted-foreground">{t('pharmacy.dispensedElsewhere')}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Prescriptions Table */}
-      <Card>
+      {/* Prescriptions Display */}
+      <Card className="bg-white shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Pill className={`w-5 h-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
@@ -184,51 +263,59 @@ export function PharmacySection() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('pharmacy.patientName')}</TableHead>
-                <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.doctorName')}</TableHead>
-                <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('pharmacy.medication')}</TableHead>
-                <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('pharmacy.prescribedDate')}</TableHead>
-                <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('pharmacy.dispenseStatus')}</TableHead>
-                <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {prescriptions.map((prescription) => (
-                <TableRow key={prescription.id}>
-                  <TableCell className={isRTL ? 'text-right' : 'text-left'}>{prescription.patientName}</TableCell>
-                  <TableCell className={isRTL ? 'text-right' : 'text-left'}>{prescription.doctorName}</TableCell>
-                  <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                    <div>
-                      <div>{prescription.medicineName}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {prescription.dosage} - {prescription.quantity}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className={isRTL ? 'text-right' : 'text-left'}>{formatDate(prescription.prescribedDate)}</TableCell>
-                  <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                    <Badge variant={getStatusBadgeVariant(prescription.dispenseStatus)}>
-                      {getStatusLabel(prescription.dispenseStatus)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => viewDetails(prescription)}
-                      className="flex items-center gap-2"
-                    >
-                      <Eye className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-                      {t('pharmacy.viewDetails')}
-                    </Button>
-                  </TableCell>
+          {/* عرض الجدول في الشاشات الكبيرة */}
+          {!isMobile ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('pharmacy.patientName')}</TableHead>
+                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.doctorName')}</TableHead>
+                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('pharmacy.medication')}</TableHead>
+                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('pharmacy.prescribedDate')}</TableHead>
+                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('pharmacy.dispenseStatus')}</TableHead>
+                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {prescriptions.map((prescription) => (
+                  <TableRow key={prescription.id}>
+                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>{prescription.patientName}</TableCell>
+                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>{prescription.doctorName}</TableCell>
+                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                      <div>
+                        <div>{prescription.medicineName}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {prescription.dosage} - {prescription.quantity}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>{formatDate(prescription.prescribedDate)}</TableCell>
+                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                      <Badge variant={getStatusBadgeVariant(prescription.dispenseStatus)}>
+                        {getStatusLabel(prescription.dispenseStatus)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => viewDetails(prescription)}
+                        className="flex items-center gap-2"
+                      >
+                        <Eye className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                        {t('pharmacy.viewDetails')}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            /* عرض الكروت في الموبايل */
+            <div className="p-4">
+              <MobilePrescriptionCards />
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -237,59 +324,59 @@ export function PharmacySection() {
         open={isDetailsOpen}
         onOpenChange={setIsDetailsOpen}
         title={t('pharmacy.prescriptionDetails')}
-        maxWidth="max-w-2xl"
+        maxWidth={`${isMobile ? 'max-w-[95vw] w-[95vw]' : 'max-w-2xl'}`}
       >
-          
+
           {selectedPrescription && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4 sm:space-y-6">
+              <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 <div>
-                  <h4 className="font-medium mb-2">Patient Information</h4>
-                  <div className="p-3 bg-muted rounded space-y-1">
-                    <div><strong>Name:</strong> {selectedPrescription.patientName}</div>
+                  <h4 className={`font-medium mb-2 ${isMobile ? 'text-base' : ''}`}>Patient Information</h4>
+                  <div className={`p-3 bg-muted rounded ${isMobile ? 'space-y-2' : 'space-y-1'}`}>
+                    <div className={isMobile ? 'text-sm' : ''}><strong>Name:</strong> {selectedPrescription.patientName}</div>
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-medium mb-2">Prescribing Doctor</h4>
-                  <div className="p-3 bg-muted rounded space-y-1">
-                    <div><strong>Doctor:</strong> {selectedPrescription.doctorName}</div>
+                  <h4 className={`font-medium mb-2 ${isMobile ? 'text-base' : ''}`}>Prescribing Doctor</h4>
+                  <div className={`p-3 bg-muted rounded ${isMobile ? 'space-y-2' : 'space-y-1'}`}>
+                    <div className={isMobile ? 'text-sm' : ''}><strong>Doctor:</strong> {selectedPrescription.doctorName}</div>
                   </div>
                 </div>
               </div>
 
               <div>
-                <h4 className="font-medium mb-2">Medication Details</h4>
-                <div className="p-3 bg-muted rounded space-y-2">
-                  <div><strong>Medicine:</strong> {selectedPrescription.medicineName}</div>
-                  <div><strong>Dosage:</strong> {selectedPrescription.dosage}</div>
-                  <div><strong>Quantity:</strong> {selectedPrescription.quantity}</div>
-                  <div><strong>Instructions:</strong> {selectedPrescription.instructions}</div>
+                <h4 className={`font-medium mb-2 ${isMobile ? 'text-base' : ''}`}>Medication Details</h4>
+                <div className={`p-3 bg-muted rounded ${isMobile ? 'space-y-3' : 'space-y-2'}`}>
+                  <div className={isMobile ? 'text-sm' : ''}><strong>Medicine:</strong> {selectedPrescription.medicineName}</div>
+                  <div className={isMobile ? 'text-sm' : ''}><strong>Dosage:</strong> {selectedPrescription.dosage}</div>
+                  <div className={isMobile ? 'text-sm' : ''}><strong>Quantity:</strong> {selectedPrescription.quantity}</div>
+                  <div className={isMobile ? 'text-sm' : ''}><strong>Instructions:</strong> {selectedPrescription.instructions}</div>
                 </div>
               </div>
 
               <div>
-                <h4 className="font-medium mb-2">Prescription History</h4>
-                <div className="p-3 bg-muted rounded space-y-2">
-                  <div><strong>Prescribed Date:</strong> {formatDateTime(selectedPrescription.prescribedDate)}</div>
-                  <div className="flex items-center gap-2">
+                <h4 className={`font-medium mb-2 ${isMobile ? 'text-base' : ''}`}>Prescription History</h4>
+                <div className={`p-3 bg-muted rounded ${isMobile ? 'space-y-3' : 'space-y-2'}`}>
+                  <div className={isMobile ? 'text-sm' : ''}><strong>Prescribed Date:</strong> {formatDateTime(selectedPrescription.prescribedDate)}</div>
+                  <div className={`flex items-center gap-2 ${isMobile ? 'flex-col items-start' : ''}`}>
                     <strong>Status:</strong>
                     <Badge variant={getStatusBadgeVariant(selectedPrescription.dispenseStatus)}>
                       {getStatusLabel(selectedPrescription.dispenseStatus)}
                     </Badge>
                   </div>
                   {selectedPrescription.dispensedDate && (
-                    <div><strong>Dispensed Date:</strong> {formatDateTime(selectedPrescription.dispensedDate)}</div>
+                    <div className={isMobile ? 'text-sm' : ''}><strong>Dispensed Date:</strong> {formatDateTime(selectedPrescription.dispensedDate)}</div>
                   )}
                   {selectedPrescription.dispensedBy && (
-                    <div><strong>Dispensed By:</strong> {selectedPrescription.dispensedBy}</div>
+                    <div className={isMobile ? 'text-sm' : ''}><strong>Dispensed By:</strong> {selectedPrescription.dispensedBy}</div>
                   )}
                   {selectedPrescription.pharmacyName && (
-                    <div><strong>Pharmacy:</strong> {selectedPrescription.pharmacyName}</div>
+                    <div className={isMobile ? 'text-sm' : ''}><strong>Pharmacy:</strong> {selectedPrescription.pharmacyName}</div>
                   )}
                 </div>
               </div>
 
-              <div className="flex justify-end">
+              <div className={`flex ${isMobile ? 'justify-center' : 'justify-end'}`}>
                 <Button onClick={() => setIsDetailsOpen(false)}>Close</Button>
               </div>
             </div>

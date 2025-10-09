@@ -79,6 +79,33 @@ export function AppointmentsManagement() {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
+  // كشف حجم الشاشة مع إعادة التقييم عند تغيير الحجم
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      const newWidth = window.innerWidth;
+      setWindowWidth(newWidth);
+      setIsMobile(newWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // إعادة تقييم حجم الشاشة عند إعادة تحميل المكون
+  React.useEffect(() => {
+    const checkMobileOnLoad = () => {
+      setIsMobile(window.innerWidth < 768);
+      setWindowWidth(window.innerWidth);
+    };
+
+    // التحقق مرة أخرى بعد تحميل المكون بالكامل
+    const timer = setTimeout(checkMobileOnLoad, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   const applyFilters = () => {
     let filtered = appointments;
 
@@ -130,6 +157,55 @@ export function AppointmentsManagement() {
       day: 'numeric'
     });
   };
+
+  // مكون عرض الكروت للموبايل
+  const MobileAppointmentsCards = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {filteredAppointments.map((appointment) => (
+        <Card key={appointment.id} className="bg-white shadow-sm">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg font-semibold text-primary">
+                {appointment.patientName}
+              </CardTitle>
+              <Badge variant={getStatusBadgeVariant(appointment.status)}>
+                {appointment.status === 'upcoming' ? t('appointments.scheduled') :
+                 appointment.status === 'completed' ? t('appointments.completed') :
+                 t('appointments.cancelled')}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-muted-foreground">{t('appointments.doctorName')}:</span>
+                <span className="text-sm">{appointment.doctorName}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-muted-foreground">{t('appointments.date')}:</span>
+                <span className="text-sm">{formatDate(appointment.date)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-muted-foreground">{t('appointments.time')}:</span>
+                <span className="text-sm">{appointment.time}</span>
+              </div>
+            </div>
+            <div className="pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => viewDetails(appointment)}
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <Eye className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                {t('pharmacy.viewDetails')}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -187,7 +263,7 @@ export function AppointmentsManagement() {
         </CardContent>
       </Card>
 
-      {/* Appointments Table */}
+      {/* Appointments Display */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -196,49 +272,57 @@ export function AppointmentsManagement() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.patientName')}</TableHead>
-                <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.doctorName')}</TableHead>
-                <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.date')} & {t('appointments.time')}</TableHead>
-                <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.status')}</TableHead>
-                <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAppointments.map((appointment) => (
-                <TableRow key={appointment.id}>
-                  <TableCell className={isRTL ? 'text-right' : 'text-left'}>{appointment.patientName}</TableCell>
-                  <TableCell className={isRTL ? 'text-right' : 'text-left'}>{appointment.doctorName}</TableCell>
-                  <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                    <div>
-                      <div>{formatDate(appointment.date)}</div>
-                      <div className="text-sm text-muted-foreground">{appointment.time}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                    <Badge variant={getStatusBadgeVariant(appointment.status)}>
-                      {appointment.status === 'upcoming' ? t('appointments.scheduled') :
-                       appointment.status === 'completed' ? t('appointments.completed') :
-                       t('appointments.cancelled')}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => viewDetails(appointment)}
-                      className="flex items-center gap-2"
-                    >
-                      <Eye className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-                      {t('pharmacy.viewDetails')}
-                    </Button>
-                  </TableCell>
+          {/* عرض الجدول في الشاشات الكبيرة */}
+          {!isMobile ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.patientName')}</TableHead>
+                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.doctorName')}</TableHead>
+                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.date')} & {t('appointments.time')}</TableHead>
+                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.status')}</TableHead>
+                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredAppointments.map((appointment) => (
+                  <TableRow key={appointment.id}>
+                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>{appointment.patientName}</TableCell>
+                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>{appointment.doctorName}</TableCell>
+                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                      <div>
+                        <div>{formatDate(appointment.date)}</div>
+                        <div className="text-sm text-muted-foreground">{appointment.time}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                      <Badge variant={getStatusBadgeVariant(appointment.status)}>
+                        {appointment.status === 'upcoming' ? t('appointments.scheduled') :
+                         appointment.status === 'completed' ? t('appointments.completed') :
+                         t('appointments.cancelled')}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => viewDetails(appointment)}
+                        className="flex items-center gap-2"
+                      >
+                        <Eye className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                        {t('pharmacy.viewDetails')}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            /* عرض الكروت في الموبايل */
+            <div className="p-4">
+              <MobileAppointmentsCards />
+            </div>
+          )}
         </CardContent>
       </Card>
 

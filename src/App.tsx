@@ -30,6 +30,15 @@ function DashboardLayout({ onLogout, currentUser }) {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // إغلاق الـ sidebar تلقائياً عند الانتقال إلى صفحة جديدة في الموبايل فقط
+  useEffect(() => {
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) {
+      // إرسال event مخصص لإغلاق الـ sidebar
+      window.dispatchEvent(new CustomEvent('close-mobile-sidebar'));
+    }
+  }, [location.pathname]);
+
   // الحفاظ على المسار الحالي عند الريلود
   useEffect(() => {
     const currentPath = location.pathname;

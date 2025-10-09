@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Filter, Plus, Edit, Trash2, History, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Filter, Plus, Edit, Trash2, History, CheckCircle, XCircle, Loader, Loader2, Eye, EyeOff } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { Button } from "./ui/button";
 import {
@@ -35,6 +35,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { RTLDialog } from "./ui/rtl-dialog";
 import { RTLSelect } from "./ui/rtl-select";
 import { ImageUpload } from './ui/image-upload';
+import CustomDatePicker from './ui/CustomDatePicker';
 import { toast } from 'react-toastify';
 import { fetchGovernorates } from "../store/slices/governoratesSlice";
 import { fetchSpecialties } from "../store/slices/specialtiesSlice";
@@ -87,6 +88,7 @@ export function UserManagement() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<{
@@ -174,6 +176,7 @@ export function UserManagement() {
       consultationPrice: "",
     });
     setSelectedImage(null); // إعادة تعيين الصورة المحددة
+    setShowPassword(false); // إعادة تعيين حالة إظهار كلمة المرور
   };
 
   const openAddModal = (userType: UserType) => {
@@ -284,52 +287,55 @@ export function UserManagement() {
 
       // إرسال البيانات إلى API
       const result = await (dispatch as any)(registerUser(formDataToSend));
-      const statusCode = result.payload?.status || result.meta?.requestStatus === 'fulfilled' ? 200 : result.error?.message;
-        
+
+
       // 2. تطبيق الشرط: إذا كان كود الحالة 200 (نجاح)
-      if (statusCode === 200 || statusCode === 201) { 
-          // 200 و 201 هي أكواد النجاح الشائعة
+      if (result.payload?.success === true) {
+        // نجح الإرسال - رسالة نجاح
+        const message = result.payload?.message || "تمت العملية بنجاح";
 
-          // نجح الإرسال - رسالة نجاح
-          const message = result.payload?.message || "تمت العملية بنجاح";
+        const CustomToastContent = () => (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <CheckCircle style={{ color: 'green', marginRight: '10px', fontSize: '24px' }} />
+            <span>{message}</span>
+          </div>
+        );
 
-          const CustomToastContent = () => (
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <CheckCircle style={{ color: 'green', marginRight: '10px', fontSize: '24px' }} />
-                  <span>{message}</span>
-              </div>
-          );
+        // إغلاق المودل وإعادة تعيين الفورم
+        toast(<CustomToastContent />, {
+          position: "top-center",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+          onClose: () => {
+            setIsAddModalOpen(false);
+            resetForm();
+          }
+        });
 
-          // إغلاق المودل وإعادة تعيين الفورم
-          toast.success(<CustomToastContent />, {
-              position: "top-center",
-              autoClose: 3000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              theme: "light",
-              onClose: () => {
-                  setIsAddModalOpen(false);
-                  resetForm();
-              }
-          });
+      } else {
+        // فشل الإرسال - رسالة خطأ
+        const errorMessage = result.payload?.message || result.error?.message || "حدث خطأ أثناء حفظ المستخدم";
 
-      } else { 
-          // فشل الإرسال - أكواد حالة أخرى (مثل 400, 401, 500) أو فشل عام
+        const CustomToastContent = () => (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
 
-          // رسالة خطأ
-          const errorMessage = result.payload?.message || result.payload || "حدث خطأ أثناء حفظ المستخدم";
-          
-          toast.error(errorMessage, {
-              position: "top-center",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              theme: "light",
-          });
+            <span>{errorMessage}</span>
+          </div>
+        );
+
+        toast.error(<CustomToastContent />, {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+        });
       }
     } catch (error) {
       toast.error("حدث خطأ غير متوقع", {
@@ -472,7 +478,7 @@ export function UserManagement() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-hidden">
       <div className="flex gap-4 ">
         <RTLDialog
           open={isAddModalOpen}
@@ -487,18 +493,20 @@ export function UserManagement() {
               {t('users.addUser')}
             </Button>
           }
+          maxWidth={isMobile ? "w-300px" : "max-w-4xl"}
+          className="max-h-[90vh] overflow-hidden"
         >
-          {/* دائرة التحميل في الأسفل */}
+          {/* دائرة التحميل في المنتصف */}
           {isSubmitting && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-[9999]">
-              <div className="bg-white p-6 rounded-lg shadow-lg flex items-center gap-3 mb-8">
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+              <div className="bg-white p-6 rounded-lg shadow-lg flex items-center gap-3">
                 <Loader2 className="w-6 h-6 animate-spin" />
                 <span>جاري الإرسال...</span>
               </div>
             </div>
           )}
 
-          <div className="space-y-4">
+          <div className={`space-y-4 ${isMobile ? 'px-2' : ''}`}>
             {!editingUser && (
               <div>
                 <Label>{t('users.accountType')}</Label>
@@ -516,7 +524,7 @@ export function UserManagement() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
               <div>
                 <Label>{t('users.fullName')}</Label>
                 <Input
@@ -524,6 +532,12 @@ export function UserManagement() {
                   onChange={(e) =>
                     setFormData({ ...formData, fullName: e.target.value })
                   }
+                  className={isMobile ? 'min-h-[44px] w-full' : ''}
+                  style={{
+                    fontSize: isMobile ? '16px' : 'inherit',
+                    textAlign: isRTL ? 'right' : 'left',
+                    direction: isRTL ? 'rtl' : 'ltr'
+                  }}
                 />
               </div>
               <div>
@@ -534,18 +548,36 @@ export function UserManagement() {
                     setFormData({ ...formData, username: e.target.value })
                   }
                   placeholder={t('users.username')}
+                  className={isMobile ? 'min-h-[44px] w-full' : ''}
+                  style={{
+                    fontSize: isMobile ? '16px' : 'inherit',
+                    textAlign: isRTL ? 'right' : 'left',
+                    direction: isRTL ? 'rtl' : 'ltr'
+                  }}
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
               <div>
                 <Label>{t('users.phone')}</Label>
                 <Input
+                  type="tel"
                   value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, ''); // فقط أرقام
+                    if (value.length <= 10) {
+                      setFormData({ ...formData, phone: value });
+                    }
+                  }}
+                  placeholder={t('users.phone')}
+                  maxLength={10}
+                  className={`w-full ${isMobile ? 'min-h-[44px]' : ''}`}
+                  style={{
+                    fontSize: isMobile ? '16px' : 'inherit',
+                    textAlign: isRTL ? 'right' : 'left',
+                    direction: isRTL ? 'rtl' : 'ltr'
+                  }}
                 />
               </div>
 
@@ -582,7 +614,7 @@ export function UserManagement() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
               <div>
                 <Label>{t('users.gender')}</Label>
                 <RTLSelect
@@ -599,62 +631,15 @@ export function UserManagement() {
                   ))}
                 </RTLSelect>
               </div>
-              <div>
-                <Label>{t('users.birthdate')}</Label>
-                <div className="relative">
-                  <div className="relative">
-                    <input
-                      ref={dateInputRef}
-                      type="text"
-                      readOnly
-                      value={formData.birthdate}
-                      onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-                      className="w-full m-0 px-6 py-1 border-2 border-gray-200 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 bg-white text-gray-900 placeholder:text-gray-500 hover:border-primary/50 cursor-pointer"
-                      placeholder={t('users.birthdate')}
-                    />
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* Custom Dropdown Calendar */}
-                  {isCalendarOpen && (
-                    <div
-                      ref={calendarRef}
-                      className="absolute top-full left-0 mt-2 z-50 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden"
-                      style={{
-                        minWidth: '280px',
-                        maxHeight: '350px' /* تصغير الحد الأقصى للارتفاع الكلي */
-                      }}
-                    >
-                      <div className="p-3" style={{ maxHeight: '330px', overflowY: 'auto' }}>
-                        <DatePicker
-                          selected={formData.birthdate ? new Date(formData.birthdate) : null}
-                          onChange={(date: Date | null) => {
-                            setFormData({
-                              ...formData,
-                              birthdate: date ? date.toISOString().split('T')[0] : ""
-                            });
-                            setIsCalendarOpen(false); // إغلاق التقويم عند التحديد
-                          }}
-                          inline
-                          dateFormat="yyyy-MM-dd"
-                          maxDate={new Date()}
-                          minDate={new Date('1900-01-01')}
-                          showYearDropdown
-                          showMonthDropdown
-                          dropdownMode="select"
-                          yearDropdownItemNumber={5}
-                          scrollableYearDropdown
-                          calendarClassName="custom-datepicker-dropdown-calendar"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
+              <div className="w-full">
+                <CustomDatePicker
+                  value={formData.birthdate}
+                  onChange={(date) => setFormData({ ...formData, birthdate: date })}
+                  label={t('users.birthdate')}
+                  placeholder={t('users.birthdate')}
+                  isRTL={isRTL}
+                  isMobile={isMobile}
+                />
               </div>
             </div>
 
@@ -662,29 +647,48 @@ export function UserManagement() {
               <div>
                 <Label>{t('users.nationalId')}</Label>
                 <Input
+                  type="text"
                   value={formData.nationalId}
-                  onChange={(e) =>
-                    setFormData({ ...formData, nationalId: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, ''); // فقط أرقام
+                    if (value.length <= 11) {
+                      setFormData({ ...formData, nationalId: value });
+                    }
+                  }}
                   placeholder={t('users.nationalId')}
+                  maxLength={11}
+                  className={isMobile ? 'min-h-[44px]' : ''}
+                  style={{
+                    fontSize: isMobile ? '16px' : 'inherit',
+                    textAlign: isRTL ? 'right' : 'left',
+                    direction: isRTL ? 'rtl' : 'ltr'
+                  }}
                 />
               </div>
             )}
 
-            <div>
+            <div className="w-full">
               <Label>{t('login.password')}</Label>
-              <Input
-                type="password"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-                placeholder={
-                  editingUser
-                    ? "Leave blank to keep current password"
-                    : "Enter password"
-                }
-              />
+              <div className="relative w-full">
+                <Input
+                  type="text"
+                  value={formData.password}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                  placeholder={
+                    editingUser
+                      ? "Leave blank to keep current password"
+                      : "ادخل كلمة مرور "
+                  }
+                  className={`w-full ${isMobile ? 'min-h-[44px]' : ''}`}
+                  style={{
+                    fontSize: isMobile ? '16px' : 'inherit',
+                    textAlign: isRTL ? 'right' : 'left',
+                    direction: isRTL ? 'rtl' : 'ltr'
+                  }}
+                />
+              </div>
             </div>
 
 
@@ -695,7 +699,7 @@ export function UserManagement() {
                     <h3 className="text-lg font-medium text-primary">
                       {t('users.addressInfo')}
                     </h3>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label>{t('users.city')}</Label>
                         <Input
@@ -704,6 +708,8 @@ export function UserManagement() {
                             setFormData({ ...formData, city: e.target.value })
                           }
                           placeholder={t('users.city')}
+                          className={isMobile ? 'min-h-[44px]' : ''}
+                          style={isMobile ? { fontSize: '16px' } : {}}
                         />
                       </div>
                       <div>
@@ -714,6 +720,8 @@ export function UserManagement() {
                             setFormData({ ...formData, street: e.target.value })
                           }
                           placeholder={t('users.street')}
+                          className={isMobile ? 'min-h-[44px]' : ''}
+                          style={isMobile ? { fontSize: '16px' } : {}}
                         />
                       </div>
                     </div>
@@ -728,6 +736,8 @@ export function UserManagement() {
                           setFormData({ ...formData, pharmacyName: e.target.value })
                         }
                         placeholder={t('users.pharmacyName')}
+                        className={isMobile ? 'min-h-[44px]' : ''}
+                        style={isMobile ? { fontSize: '16px' } : {}}
                       />
                     </div>
                   )}
@@ -775,7 +785,7 @@ export function UserManagement() {
                           })
                         ) : (
                           <p className="text-sm text-muted-foreground mt-1">
-                            {t('users.noSpecialtiesSelected') || 'لم يتم اختيار أي تخصصات بعد'}
+                            {'لم يتم اختيار أي تخصصات بعد'}
                           </p>
                         )}
                       </div>
@@ -797,6 +807,7 @@ export function UserManagement() {
                       setFormData({ ...formData, bio: e.target.value })
                     }
                     placeholder={t('users.bio')}
+                    className={isMobile ? 'min-h-[100px]' : ''}
                   />
                 </div>
 
@@ -809,6 +820,8 @@ export function UserManagement() {
                       setFormData({ ...formData, consultationPrice: e.target.value })
                     }
                     placeholder={t('users.consultationPrice')}
+                    className={isMobile ? 'min-h-[44px]' : ''}
+                    style={isMobile ? { fontSize: '16px' } : {}}
                   />
                 </div>
 
@@ -840,24 +853,23 @@ export function UserManagement() {
 
             <Separator />
 
-
-
-            <div className="flex justify-end gap-4">
+            <div className={`flex justify-end gap-4 ${isMobile ? 'flex-col space-y-2' : ''}`}>
               <Button
                 variant="outline"
                 onClick={() => setIsAddModalOpen(false)}
                 disabled={isSubmitting}
+                className={isMobile ? 'w-full min-h-[44px] order-2' : ''}
               >
                 {t('common.cancel')}
               </Button>
               <Button
                 onClick={handleSubmit}
-                className="bg-primary hover:bg-primary/90"
+                className={`bg-primary hover:bg-primary/90 ${isMobile ? 'w-full min-h-[44px] order-1' : ''}`}
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    <Loader className="w-4 h-4 animate-spin mr-2" />
                     جاري الإرسال...
                   </>
                 ) : (
@@ -895,7 +907,7 @@ export function UserManagement() {
             <div className="flex items-end gap-2">
               <Button onClick={() => {
                 // جلب البيانات حسب الفلتر المحدد
-                (dispatch as any)(fetchUsers(selectedAccountTypeFilter ?? 'doctor'));
+                (dispatch as any)(fetchUsers(selectedAccountTypeFilter || 'doctor'));
               }}>{t('common.apply')}</Button>
               <Button variant="outline" onClick={() => {
                 setSelectedAccountTypeFilter("doctor");
@@ -924,262 +936,300 @@ export function UserManagement() {
                 </div>
               ) : (
                 users.map((user) => (
-                  <Card key={user.id} className="mobile-padding">
-                    <CardContent className="p-0 space-y-3">
-                      <div className="mobile-flex-between">
-                        <div>
-                          <h3 className="mobile-heading text-primary">{user.fullName}</h3>
-                          <p className="mobile-text-sm text-muted-foreground">@{user.username}</p>
+                  <>
+                  <Card key={user.id} className="mobile-card mobile-padding">
+                    <CardContent className="pb-0 ">
+                      {/* رأس البطاقة - الاسم وحالة المستخدم */}
+                      <div className="mobile-card-header flex items-center justify-between">
+                        <div className="flex-1">
+                          <h3 className="text-lg text-primary font-semibold">{user.fullName}</h3>
+                          <p className="text-sm text-muted-foreground">@{user.username}</p>
                         </div>
-                        <div className={`cursor-pointer`} onClick={() => confirmToggleStatus(user.id, user.accountStatus)}
-                          title={user.accountStatus === "active" ? t('users.deactivate') : t('users.activate')}>
+                        <div
+                          className={`cursor-pointer transition-all hover:scale-105`}
+                          onClick={() => confirmToggleStatus(user.id, user.accountStatus)}
+                          title={user.accountStatus === "active" ? t('users.deactivate') : t('users.activate')}
+                        >
                           <Badge
                             variant={
                               user.accountStatus === "active"
                                 ? "default"
                                 : "destructive"
                             }
-                            className="mobile-text-sm"
+                            className="mobile-text-sm px-3 py-1"
                           >
                             {user.accountStatus === "active" ? (
-                              <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
+                              <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
                             ) : (
-                              <XCircle className="w-4 h-4 text-red-500 mr-1" />
+                              <XCircle className="w-4 h-4 text-red-500 mr-2" />
                             )}
                             {user.accountStatus === 'active' ? t('users.active') : t('users.inactive')}
                           </Badge>
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <div className="mobile-flex-between">
-                          <span className="mobile-text-sm text-muted-foreground">{t('users.phone')}:</span>
-                          <span className="mobile-text-sm">{user.phone}</span>
+                      {/* معلومات المستخدم */}
+                      <div className="mobile-card-info space-y-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 rounded-full bg-muted-foreground"></div>
+                          <div className="flex-1">
+                            <span className="text-sm text-muted-foreground font-medium">{t('users.phone')}:  </span>
+                            <span className="text-sm mr-2">{user.phone}</span>
+                          </div>
                         </div>
 
-                        <div className="mobile-flex-between">
-                          <span className="mobile-text-sm text-muted-foreground">{t('users.governorate')}:</span>
-                          <span className="mobile-text-sm">
-                            {user.governorate_id ? (
-                              <span>
-                                {isRTL
-                                  ? governorates.find(g => g.id === user.governorate_id)?.nameAr || user.governorate
-                                  : governorates.find(g => g.id === user.governorate_id)?.nameEn || user.governorate
-                                }
-                              </span>
-                            ) : user.governorate && (
-                              <span>
-                                {isRTL
-                                  ? governorates.find(g => g.nameEn === user.governorate || g.nameAr === user.governorate)?.nameAr || user.governorate
-                                  : governorates.find(g => g.nameEn === user.governorate || g.nameAr === user.governorate)?.nameEn || user.governorate
-                                }
-                              </span>
-                            )}
-                          </span>
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 rounded-full bg-muted-foreground"></div>
+                          <div className="flex-1">
+                            <span className="text-sm text-muted-foreground font-medium">{t('users.governorate')}:  </span>
+                            <span className="text-sm mr-2">
+                              {user.governorate_id ? (
+                                <span>
+                                  {isRTL
+                                    ? governorates.find(g => g.id === user.governorate_id)?.nameAr || user.governorate
+                                    : governorates.find(g => g.id === user.governorate_id)?.nameEn || user.governorate
+                                  }
+                                </span>
+                              ) : user.governorate && (
+                                <span>
+                                  {isRTL
+                                    ? governorates.find(g => g.nameEn === user.governorate || g.nameAr === user.governorate)?.nameAr || user.governorate
+                                    : governorates.find(g => g.nameEn === user.governorate || g.nameAr === user.governorate)?.nameEn || user.governorate
+                                  }
+                                </span>
+                              )}
+                            </span>
+                          </div>
                         </div>
 
-                        <div className="mobile-flex-between">
-                          <span className="mobile-text-sm text-muted-foreground">
-                            {selectedAccountTypeFilter === 'patient' ? t('users.nationalId') :
-                              selectedAccountTypeFilter === 'pharmacist' ? t('users.pharmacyName') :
-                                t('users.specialties')}:
-                          </span>
-                          <span className="mobile-text-sm">
-                            {selectedAccountTypeFilter === 'patient' ? (
-                              user.nationalId || t('users.noNationalId')
-                            ) : selectedAccountTypeFilter === 'pharmacist' ? (
-                              user.pharmacy_name || t('users.noPharmacy')
-                            ) : (
-                              user.specialties && user.specialties.length > 0 ? (
-                                <div className="flex flex-wrap gap-1">
-                                  {user.specialties.map((specialty, index) => (
-                                    <Badge
-                                      key={specialty.id || index}
-                                      variant="outline"
-                                      className="mobile-text-sm p-1 bg-primary/10 hover:bg-primary/20 text-primary"
-                                    >
-                                      {specialty.name || `تخصص ${specialty.id}`}
-                                    </Badge>
-                                  ))}
-                                </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-2 h-2 rounded-full bg-muted-foreground mt-1"></div>
+                          <div className="flex-1">
+                            <span className="text-sm text-muted-foreground font-medium block">
+                              {selectedAccountTypeFilter === 'patient' ? t('users.nationalId') :
+                                selectedAccountTypeFilter === 'pharmacist' ? t('users.pharmacyName') :
+                                  t('users.specialties')}:  
+                            </span>
+                            <div className="mt-1">
+                              {selectedAccountTypeFilter === 'patient' ? (
+                                <span className="text-sm bg-muted px-6 py-1 rounded text-xs   ">
+                                      {user.nationalId || t('users.noNationalId')}
+                                </span>
+                              ) : selectedAccountTypeFilter === 'pharmacist' ? (
+                                <span className="text-sm bg-muted px-2 py-1 rounded text-xs justify-center items-center">
+                                  {user.pharmacy_name || t('users.noPharmacy')}
+                                </span>
                               ) : (
-                                t('users.noSpecialties')
-                              )
-                            )}
-                          </span>
+                                user.specialties && user.specialties.length > 0 ? (
+                                  <div className="flex flex-wrap gap-1 justify-center items-center">
+                                    {user.specialties.map((specialty, index) => (
+                                      <Badge
+                                        key={specialty.id || index}
+                                        variant="outline"
+                                        className="mobile-text-sm p-1 bg-primary/10 hover:bg-primary/20 text-primary text-xs"
+                                      >
+                                        {specialty.name || `تخصص ${specialty.id}`}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span className="text-sm text-muted-foreground">
+                                    {t('users.noSpecialties')}
+                                  </span>
+                                )
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="mobile-flex-center mobile-gap">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openEditModal(user)}
-                          className="mobile-button"
-                        >
-                          <Edit className="w-4 h-4 mr-1" />
-                          {t('common.edit')}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setShowMedicalHistory(user)}
-                          className="mobile-button bg-primary/10 hover:bg-primary/20 text-primary"
-                        >
-                          <History className="w-4 h-4 mr-1" />
-                          {t('users.medicalHistory')}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteUser(user.id)}
-                          className="mobile-button"
-                        >
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          {t('common.delete')}
-                        </Button>
+                      {/* أزرار الإجراءات */}
+                      <div className="mobile-card-actions flex flex-col gap-2 justify-center items-center">
+                        {/* الزرين العلويين */}
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowMedicalHistory(user)}
+                            className="mobile-button bg-primary/10 hover:bg-primary/20 text-primary text-sm"
+                          >
+                            <History className="w-3 h-3 mr-1" />
+                            {t('users.medicalHistory')}
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deleteUser(user.id)}
+                            className="mobile-button text-sm text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400"
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" />
+                            {t('common.delete')}
+                          </Button>
+                        </div>
+
+                        {/* زر التعديل تحت الزرين الآخرين */}
+                        <div className="flex justify-center">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditModal(user)}
+                            className="mobile-button text-sm"
+                          >
+                            <Edit className="w-3 h-3 mr-1" />
+                            {t('common.edit')}
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
+                   
+
                   </Card>
+                   <div className="h-2"></div>
+                   </>
                 ))
               )}
             </div>
           ) : (
             // Desktop Table View - existing code
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.fullName')}</TableHead>
-                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.phone')}</TableHead>
-                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.governorate')}</TableHead>
-                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>
-                    {selectedAccountTypeFilter === 'patient' ? t('users.nationalId') :
-                      selectedAccountTypeFilter === 'pharmacist' ? t('users.pharmacyName') :
-                        t('users.specialties')}
-                  </TableHead>
-                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.username')}</TableHead>
-                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.status')}</TableHead>
-                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {usersLoading ? (
+            <div className="mobile-table-container">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
-                      <div className="flex items-center justify-center gap-2">
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>جاري تحميل المستخدمين...</span>
-                      </div>
-                    </TableCell>
+                    <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.fullName')}</TableHead>
+                    <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.phone')}</TableHead>
+                    <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.governorate')}</TableHead>
+                    <TableHead className={isRTL ? 'text-right' : 'text-left'}>
+                      {selectedAccountTypeFilter === 'patient' ? t('users.nationalId') :
+                        selectedAccountTypeFilter === 'pharmacist' ? t('users.pharmacyName') :
+                          t('users.specialties')}
+                    </TableHead>
+                    <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.username')}</TableHead>
+                    <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('users.status')}</TableHead>
+                    <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
                   </TableRow>
-                ) : users.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      لا توجد مستخدمين من هذا النوع
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className={isRTL ? 'text-right' : 'text-left'}>{user.fullName}</TableCell>
-                      <TableCell className={isRTL ? 'text-right' : 'text-left'}>{user.phone}</TableCell>
-                      <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                        {user.governorate_id ? (
-                          <span>
-                            {isRTL
-                              ? governorates.find(g => g.id === user.governorate_id)?.nameAr || user.governorate
-                              : governorates.find(g => g.id === user.governorate_id)?.nameEn || user.governorate
-                            }
-                          </span>
-                        ) : user.governorate && (
-                          <span>
-                            {isRTL
-                              ? governorates.find(g => g.nameEn === user.governorate || g.nameAr === user.governorate)?.nameAr || user.governorate
-                              : governorates.find(g => g.nameEn === user.governorate || g.nameAr === user.governorate)?.nameEn || user.governorate
-                            }
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                        {selectedAccountTypeFilter === 'patient' ? (
-                          user.nationalId || t('users.noNationalId')
-                        ) : selectedAccountTypeFilter === 'pharmacist' ? (
-                          user.pharmacy_name || t('users.noPharmacy')
-                        ) : (
-                          user.specialties && user.specialties.length > 0 ? (
-                            <div className="flex flex-wrap gap-1">
-                             {user.specialties.map((specialty, index) => (
-      <Badge
-          key={specialty.id || index}
-          variant="outline"
-          className="p-1 my-1 bg-primary/10 hover:bg-primary/20 text-primary"
-      >
-          {specialty.name || `تخصص ${specialty.id}`}
-      </Badge>
-))}
-
-                            </div>
-                          ) : (
-                            t('users.noSpecialties')
-                          )
-                        )}
-                      </TableCell>
-                      <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                        {user.username}
-                      </TableCell>
-                      <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                        <div className={`flex items-center gap-2 cursor-pointer`} onClick={() => confirmToggleStatus(user.id, user.accountStatus)}
-                          title={user.accountStatus === "active" ? t('users.deactivate') : t('users.activate')}>
-                          <Badge
-                            variant={
-                              user.accountStatus === "active"
-                                ? "default"
-                                : "destructive"
-                            }
-                          >
-                            {user.accountStatus === "active" ? (
-                              <CheckCircle className="w-6 h-6 text-green-500" />
-                            ) : (
-                              <XCircle className="w-6 h-6 text-red-500" />
-                            )}
-                            {user.accountStatus === 'active' ? t('users.active') : t('users.inactive')}
-                          </Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                        <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openEditModal(user)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowMedicalHistory(user)}
-                            className="bg-primary/10 hover:bg-primary/20 text-primary"
-                          >
-                            <History className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => deleteUser(user.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                </TableHeader>
+                <TableBody>
+                  {usersLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8">
+                        <div className="flex items-center justify-center gap-2">
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span>جاري تحميل المستخدمين...</span>
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ) : users.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        لا توجد مستخدمين من هذا النوع
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    users.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className={isRTL ? 'text-right' : 'text-left'}>{user.fullName}</TableCell>
+                        <TableCell className={isRTL ? 'text-right' : 'text-left'}>{user.phone}</TableCell>
+                        <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                          {user.governorate_id ? (
+                            <span>
+                              {isRTL
+                                ? governorates.find(g => g.id === user.governorate_id)?.nameAr || user.governorate
+                                : governorates.find(g => g.id === user.governorate_id)?.nameEn || user.governorate
+                              }
+                            </span>
+                          ) : user.governorate && (
+                            <span>
+                              {isRTL
+                                ? governorates.find(g => g.nameEn === user.governorate || g.nameAr === user.governorate)?.nameAr || user.governorate
+                                : governorates.find(g => g.nameEn === user.governorate || g.nameAr === user.governorate)?.nameEn || user.governorate
+                              }
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                          {selectedAccountTypeFilter === 'patient' ? (
+                            user.nationalId || t('users.noNationalId')
+                          ) : selectedAccountTypeFilter === 'pharmacist' ? (
+                            user.pharmacy_name || t('users.noPharmacy')
+                          ) : (
+                            user.specialties && user.specialties.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {user.specialties.map((specialty, index) => (
+                                  <Badge
+                                    key={specialty.id || index}
+                                    variant="outline"
+                                    className="p-1 my-1 bg-primary/10 hover:bg-primary/20 text-primary"
+                                  >
+                                    {specialty.name || `تخصص ${specialty.id}`}
+                                  </Badge>
+                                ))}
+
+                              </div>
+                            ) : (
+                              t('users.noSpecialties')
+                            )
+                          )}
+                        </TableCell>
+                        <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                          {user.username}
+                        </TableCell>
+                        <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                          <div className={`flex items-center gap-2 cursor-pointer`} onClick={() => confirmToggleStatus(user.id, user.accountStatus)}
+                            title={user.accountStatus === "active" ? t('users.deactivate') : t('users.activate')}>
+                            <Badge
+                              variant={
+                                user.accountStatus === "active"
+                                  ? "default"
+                                  : "destructive"
+                              }
+                            >
+                              {user.accountStatus === "active" ? (
+                                <CheckCircle className="w-6 h-6 text-green-500" />
+                              ) : (
+                                <XCircle className="w-6 h-6 text-red-500" />
+                              )}
+                              {user.accountStatus === 'active' ? t('users.active') : t('users.inactive')}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                          <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openEditModal(user)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowMedicalHistory(user)}
+                              className="bg-primary/10 hover:bg-primary/20 text-primary"
+                            >
+                              <History className="w-4 h-4" />
+                            </Button>
+                            <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deleteUser(user.id)}
+                            className="mobile-button text-xs text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          
+                          </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
-  
+
       </Card>
 
       {/* Medical History Dialog */}
@@ -1204,124 +1254,3 @@ export function UserManagement() {
   );
 }
 
-// Add custom styles for react-datepicker
-const datePickerStyles = `
-  .custom-datepicker-calendar {
-    font-family: inherit !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 12px !important;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
-    overflow: hidden !important;
-  }
-
-  .custom-datepicker-dropdown-calendar {
-    display: flex !important;
-    flex-direction: column !important;
-  }
-
-  .custom-datepicker-dropdown-calendar .react-datepicker__current-month,
-  .custom-datepicker-dropdown-calendar .react-datepicker__day-name {
-    color: #1e3561 !important;
-    font-weight: 600 !important;
-  }
-
-  .custom-datepicker-calendar .react-datepicker__day {
-    color: #374151 !important;
-    padding: 8px !important;
-    font-size: 14px !important;
-    transition: all 0.2s ease !important;
-  }
-
-  .custom-datepicker-calendar .react-datepicker__day:hover {
-    background-color: #eff6ff !important;
-    color: #3b82f6 !important;
-  }
-
-  .custom-datepicker-calendar .react-datepicker__day--selected {
-    background-color: #3b82f6 !important;
-    color: white !important;
-  }
-
-  .custom-datepicker-dropdown-calendar .react-datepicker__header {
-    background-color: #e2e8f0 !important;
-    border-bottom: none !important;
-    padding: 12px !important; /* تقليل الـ padding */
-  }
-
-  .custom-datepicker-dropdown-calendar .react-datepicker__day-names,
-  .custom-datepicker-dropdown-calendar .react-datepicker__month {
-    order: 2 !important;
-  }
-
-  .custom-datepicker-dropdown-calendar .react-datepicker__year-dropdown,
-  .custom-datepicker-dropdown-calendar .react-datepicker__month-dropdown {
-    order: 3 !important; /* لجعلها تظهر بعد التقويم */
-    position: static !important;
-    margin-top: 8px !important;
-    margin-bottom: 0 !important;
-    border-top: 1px solid #e2e8f0 !important;
-    border-bottom: none !important;
-    border-radius: 0 0 8px 8px !important;
-    max-height: 50px !important; /* تقليل الارتفاع */
-    box-shadow: none !important;
-  }
-
-  .custom-datepicker-dropdown-calendar .react-datepicker__navigation {
-    border: none !important;
-    background: none !important;
-    outline: none !important;
-    top: 12px !important; /* تعديل الموقع ليتناسب مع الـ padding الجديد */
-  }
-
-  .custom-datepicker-calendar .react-datepicker__year-dropdown::-webkit-scrollbar,
-  .custom-datepicker-calendar .react-datepicker__month-dropdown::-webkit-scrollbar {
-    width: 6px !important;
-  }
-
-  .custom-datepicker-calendar .react-datepicker__year-dropdown::-webkit-scrollbar-track,
-  .custom-datepicker-calendar .react-datepicker__month-dropdown::-webkit-scrollbar-track {
-    background: #f8fafc !important;
-    border-radius: 3px !important;
-  }
-
-  .custom-datepicker-calendar .react-datepicker__year-dropdown::-webkit-scrollbar-thumb,
-  .custom-datepicker-calendar .react-datepicker__month-dropdown::-webkit-scrollbar-thumb {
-    background: #cbd5e1 !important;
-    border-radius: 3px !important;
-  }
-
-  .custom-datepicker-calendar .react-datepicker__year-dropdown::-webkit-scrollbar-thumb:hover,
-  .custom-datepicker-calendar .react-datepicker__month-dropdown::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8 !important;
-  }
-
-  .custom-datepicker-calendar .react-datepicker__year-option,
-  .custom-datepicker-calendar .react-datepicker__month-option {
-    padding: 8px 12px !important;
-    cursor: pointer !important;
-    transition: background-color 0.2s ease !important;
-  }
-
-  .custom-datepicker-calendar .react-datepicker__year-option:hover,
-  .custom-datepicker-calendar .react-datepicker__month-option:hover {
-    background-color: #f3f4f6 !important;
-  }
-
-  .custom-datepicker-calendar .react-datepicker__year-option--selected,
-  .custom-datepicker-calendar .react-datepicker__month-option--selected {
-    background-color: #3b82f6 !important;
-    color: white !important;
-  }
-
-  .custom-datepicker-dropdown-calendar[dir="rtl"] .react-datepicker__navigation-icon::before {
-    border-color: #1e3561 !important;
-    border-width: 2px 0 0 2px !important;
-  }
-`;
-
-// Inject styles
-if (typeof document !== 'undefined') {
-  const styleElement = document.createElement('style');
-  styleElement.textContent = datePickerStyles;
-  document.head.appendChild(styleElement);
-}

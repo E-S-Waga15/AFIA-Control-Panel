@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Sidebar,
   SidebarContent,
@@ -60,9 +60,23 @@ interface RTLSidebarProps {
 
 export function RTLSidebar({ children, className, defaultOpen = true, side, variant, collapsible }: RTLSidebarProps) {
   const { isRTL } = useLanguage();
+  const { setOpenMobile } = useSidebar();
 
   // تحديد الجانب بناءً على اللغة إذا لم يتم تحديده صراحة
   const sidebarSide = side || (isRTL ? "right" : "left");
+
+  // إغلاق الـ sidebar في الموبايل عند الانتقال إلى صفحة جديدة
+  useEffect(() => {
+    const handleCloseSidebar = () => {
+      setOpenMobile(false);
+    };
+
+    window.addEventListener('close-mobile-sidebar', handleCloseSidebar);
+
+    return () => {
+      window.removeEventListener('close-mobile-sidebar', handleCloseSidebar);
+    };
+  }, [setOpenMobile]);
 
   return (
     <Sidebar
