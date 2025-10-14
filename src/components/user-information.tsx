@@ -8,6 +8,8 @@ import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Printer, Search, FileText, ArrowRight } from 'lucide-react';
 import { fetchUserProfile, clearUserProfile } from '../store/slices/userProfileSlice';
+// استيراد صورة اللوغو كمتغير
+const logoImage = '/logo2.png';
 // بيانات احتياطية في حالة عدم توفر البيانات من API
 const fallbackMockData = {
   id: '0',
@@ -201,7 +203,7 @@ export function UserInformation() {
                 <div className="flex items-center gap-3 order-1 sm:order-2">
                   {/* Company Logo */}
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center">
-                    <img src="/logo2.png" alt="Company Logo" className="w-full h-full object-contain" />
+                    <img src={logoImage} alt="Company Logo" className="w-full h-full object-contain" />
                   </div>
                 </div>
 
