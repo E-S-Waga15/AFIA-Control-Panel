@@ -8,7 +8,6 @@ import { Login } from './components/login';
 import { DashboardHome } from './components/dashboard-home';
 import { UserManagement } from './components/user-management';
 import { AppointmentsManagement } from './components/appointments-management';
-import { PharmacySection } from './components/pharmacy-section';
 import { UserInformation } from './components/user-information';
 import { ServicesManagement } from './components/services-management';
 import { DoctorsRatings } from './components/doctors-ratings';
@@ -53,7 +52,6 @@ function DashboardLayout({ onLogout, currentUser }) {
     if (path === '/' ) return 'home';
     if (path === '/users') return 'users';
     if (path === '/appointments') return 'appointments';
-    if (path === '/pharmacy') return 'pharmacy';
     if (path === '/services') return 'services';
     if (path === '/ratings') return 'ratings';
     return 'home';
@@ -65,7 +63,6 @@ function DashboardLayout({ onLogout, currentUser }) {
     { path: '/', label: t('sidebar.dashboard'), icon: Home, id: 'home' },
     { path: '/users', label: t('sidebar.userManagement'), icon: Users, id: 'users' },
     { path: '/appointments', label: t('sidebar.appointments'), icon: Calendar, id: 'appointments' },
-    { path: '/pharmacy', label: t('sidebar.prescriptions'), icon: Pill, id: 'pharmacy' },
     { path: '/services', label: t('sidebar.servicesSpecialties'), icon: Settings, id: 'services' },
     { path: '/ratings', label: t('sidebar.doctorRatings'), icon: Star, id: 'ratings' },
   ];
@@ -75,7 +72,6 @@ function DashboardLayout({ onLogout, currentUser }) {
       case 'home': return t('app.dashboardOverview');
       case 'users': return t('sections.userManagement');
       case 'appointments': return t('sections.appointmentsManagement');
-      case 'pharmacy': return t('sections.prescriptions');
       case 'services': return t('sections.servicesSpecialties');
       case 'ratings': return t('sections.doctorRatings');
       default: return '';
@@ -143,7 +139,6 @@ function DashboardLayout({ onLogout, currentUser }) {
               <Route path="/" element={<DashboardHome />} />
               <Route path="/users" element={<UserManagement />} />
               <Route path="/appointments" element={<AppointmentsManagement />} />
-              <Route path="/pharmacy" element={<PharmacySection />} />
               <Route path="/services" element={<ServicesManagement />} />
               <Route path="/ratings" element={<DoctorsRatings />} />
               <Route path="/user-information/:userId" element={<UserInformation />} />
