@@ -195,17 +195,18 @@ export function UserInformation() {
                     <div className="border-b-2  pb-3 mb-4">
                         {/* Company Header */}
                         <div className="flex flex-col sm:flex-row items-center sm:items-start sm:justify-between mb-3 gap-4">
-                            <div className="text-center sm:text-right order-2 sm:order-1">
-                                <h1 className="text-xl sm:text-2xl font-bold text-primary">عافـية</h1>
-                                <p className="text-xs sm:text-sm text-muted-foreground">مؤسسة ميدلايـف الطبية</p>
-                            </div>
-
-                            <div className="flex items-center gap-3 order-1 sm:order-2">
+                            
+                        <div className="flex items-center gap-3 order-1 sm:order-2">
                                 {/* Company Logo */}
                                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center">
                                     <img src={logoImage} alt="Company Logo" className="w-full h-full object-contain" />
                                 </div>
                             </div>
+                            <div className="text-center sm:text-right order-2 sm:order-1">
+                                <h1 className="text-xl sm:text-2xl font-bold text-primary">عافـية</h1>
+                                <p className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">مؤسسة ميدلايـف الطبية</p>
+                            </div>
+
 
                             {/* Document Date - Mobile First */}
                             <div className="text-center sm:text-left text-xs sm:text-sm order-3 w-full sm:w-auto">
@@ -240,11 +241,7 @@ export function UserInformation() {
                                     </div>
                                     <div className="text-right print:text-center">
                                         <p className="text-muted-foreground mb-1">نوع الحساب</p>
-                                        <Badge variant={
-                                            displayAccountType === 'doctor' ? 'default' :
-                                                displayAccountType === 'patient' ? 'secondary' :
-                                                    'outline'
-                                        } className="text-xs px-2 py-1">
+                                        <Badge variant="outline" className="text-xs px-2 py-1 bg-primary/10 text-primary">
                                             {displayAccountType === 'doctor' ? 'طبيب' :
                                                 displayAccountType === 'patient' ? 'مريض' :
                                                     'صيدلي'}
