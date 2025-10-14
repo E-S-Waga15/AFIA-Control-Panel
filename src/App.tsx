@@ -9,9 +9,9 @@ import { DashboardHome } from './components/dashboard-home';
 import { UserManagement } from './components/user-management';
 import { AppointmentsManagement } from './components/appointments-management';
 import { PharmacySection } from './components/pharmacy-section';
+import { UserInformation } from './components/user-information';
 import { ServicesManagement } from './components/services-management';
 import { DoctorsRatings } from './components/doctors-ratings';
-
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton,
@@ -130,7 +130,7 @@ function DashboardLayout({ onLogout, currentUser }) {
         </RTLSidebar>
 
         <main className="flex-1 flex flex-col">
-          <header className="border-b bg-card p-4 flex items-center justify-between">
+          <header className="border-b print:hidden bg-card p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <RTLSidebarTrigger />
               <h1 className="text-xl font-semibold text-primary">{getPageTitle()}</h1>
@@ -146,6 +146,7 @@ function DashboardLayout({ onLogout, currentUser }) {
               <Route path="/pharmacy" element={<PharmacySection />} />
               <Route path="/services" element={<ServicesManagement />} />
               <Route path="/ratings" element={<DoctorsRatings />} />
+              <Route path="/user-information/:userId" element={<UserInformation />} />
             </Routes>
           </div>
         </main>

@@ -300,9 +300,80 @@
     padding: 1rem;
   }
 
-  /* تحسين عرض الأزرار */
-  .mobile-button {
-    min-height: 44px;
-    padding: 0.5rem 1rem;
+/* إصلاح مشكلة عدم احتواء المحتوى في شاشة الموبايل */
+@media (max-width: 767px) {
+  /* التأكد من أن جميع العناصر لا تتجاوز عرض الشاشة */
+  .space-y-6 {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* إصلاح الجداول لتكون متجاوبة */
+  .overflow-x-auto {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* إصلاح البطاقات لتكون محصورة في الشاشة */
+  .bg-white.rounded-lg.shadow-lg {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box;
+  }
+
+  /* إصلاح الحاوي الرئيسي */
+  .min-h-screen {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  /* إصلاح الـ padding للعناصر الداخلية */
+  [class*="p-6"] {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    box-sizing: border-box;
+  }
+
+  /* إصلاح الجداول */
+  table {
+    width: 100%;
+    max-width: 100%;
+    table-layout: fixed;
+  }
+
+  /* إصلاح خلايا الجدول */
+  td, th {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 150px;
+    white-space: normal;
+  }
+
+  /* إصلاح العناوين الطويلة */
+  h1, h2, h3, h4, h5, h6 {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+
+  /* إصلاح الأزرار */
+  .gap-2 {
+    flex-wrap: wrap;
+  }
+
+  /* إصلاح النصوص الطويلة */
+  p, span, div {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 }
+} 

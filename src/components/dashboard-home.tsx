@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Download, TrendingUp, Users, Calendar, Pill, Building2 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Download, TrendingUp, Users, Calendar, Pill, Building2, FileText } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { Badge } from './ui/badge';
 import { useLanguage } from '../contexts/LanguageContext';
 import { RTLSelect } from './ui/rtl-select';
 import "../styles/responsive-utils.css";
@@ -63,6 +65,8 @@ export function DashboardHome() {
     { date: '2024-01-05', appointments: 55, patients: 40, doctors: 10, pharmacies: 4 },
     { date: '2024-01-06', appointments: 49, patients: 36, doctors: 10, pharmacies: 4 },
     { date: '2024-01-07', appointments: 58, patients: 44, doctors: 11, pharmacies: 4 },
+    { date: '2024-01-07', appointments: 58, patients: 44, doctors: 11, pharmacies: 4 },
+    { date: '2024-01-07', appointments: 58, patients: 44, doctors: 11, pharmacies: 4 },
   ];
 
   const monthlyData = [
@@ -87,6 +91,56 @@ export function DashboardHome() {
     doctorGrowth: '+5.2%',
     pharmacyGrowth: '+6.7%'
   };
+ // Mock data for detailed reports - Arabic content
+ const topDoctors = [
+  { name: 'د. أحمد محمود', specialty: 'القلب والأوعية الدموية', totalAppointments: 342, completedAppointments: 325, cancelledAppointments: 17, rating: 4.9 },
+  { name: 'د. فاطمة السيد', specialty: 'طب الأطفال', totalAppointments: 298, completedAppointments: 285, cancelledAppointments: 13, rating: 4.8 },
+  { name: 'د. محمد علي', specialty: 'الجراحة العامة', totalAppointments: 276, completedAppointments: 268, cancelledAppointments: 8, rating: 4.7 },
+  { name: 'د. نورا عبدالله', specialty: 'طب النساء والتوليد', totalAppointments: 264, completedAppointments: 252, cancelledAppointments: 12, rating: 4.9 },
+  { name: 'د. خالد حسن', specialty: 'العظام', totalAppointments: 251, completedAppointments: 243, cancelledAppointments: 8, rating: 4.6 },
+];
+
+const appointmentStats = {
+  totalBookings: 11370,
+  completedBookings: 10845,
+  cancelledBookings: 525,
+  scheduledBookings: 1430,
+  cancellationRate: '4.6%',
+  completionRate: '95.4%',
+  scheduledRate: '12.6%',
+  averageBookingsPerDay: 189,
+  averageBookingsPerMonth: 5685,
+  peakBookingHour: '10:00 - 11:00 صباحاً',
+};
+
+// Pie chart data for appointment status distribution
+const appointmentStatusData = [
+  { name: 'مكتملة', value: 10845, color: '#059669', percentage: '75.8%' },
+  { name: 'محجوزة', value: 1430, color: '#1e3561', percentage: '10.0%' },
+  { name: 'ملغاة', value: 525, color: '#f9555c', percentage: '3.7%' },
+];
+
+  // Custom label for pie chart with white text
+  const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+      <text
+        x={x}
+        y={y}
+        fill="white"
+        textAnchor={x > cx ? 'start' : 'end'}
+        dominantBaseline="central"
+        className="font-semibold"
+        style={{ fontSize: '14px', fontWeight: 'bold' }}
+      >
+        {`${(percent * 100).toFixed(1)}%`}
+      </text>
+    );
+  };
 
   const handleExportReport = () => {
     // In a real app, this would generate and download a report
@@ -108,7 +162,25 @@ export function DashboardHome() {
     
     URL.revokeObjectURL(url);
   };
-
+  const handleExportDetailedReport = () => {
+    const detailedReport = {
+      period: selectedPeriod,
+      topDoctors,
+      appointmentStatistics: appointmentStats,
+      generatedAt: new Date().toISOString(),
+    };
+    
+    const dataStr = JSON.stringify(detailedReport, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `medlife-detailed-report-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    
+    URL.revokeObjectURL(url);
+  };
   return (
     <div className="w-full min-h-screen bg-gray-50">
       {/* Header Section */}
@@ -295,7 +367,255 @@ export function DashboardHome() {
             </div>
           </CardContent>
       </Card>
+      <div className="h-10"></div>
+      {/* Detailed Reports Section - Arabic */}
+      <div className="space-y-6" dir="rtl">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-xl font-semibold text-primary">التقارير التفصيلية</h2>
+            <p className="text-sm text-muted-foreground">إحصائيات شاملة عن الأطباء والمواعيد</p>
+          </div>
+          <Button onClick={handleExportDetailedReport} className="bg-secondary hover:bg-secondary/90">
+            <Download className="w-4 h-4 ml-2" />
+            تصدير التقرير
+          </Button>
+        </div>
 
+        {/* Top Doctors Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-primary text-right">الأطباء الأكثر حجزاً</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-right hidden sm:table-cell">اسم الطبيب</TableHead>
+                    <TableHead className="text-right">التخصص</TableHead>
+                    <TableHead className="text-right">إجمالي المواعيد</TableHead>
+                    <TableHead className="text-right hidden md:table-cell">المواعيد المكتملة</TableHead>
+                    <TableHead className="text-right hidden md:table-cell">المواعيد الملغاة</TableHead>
+                    <TableHead className="text-right hidden lg:table-cell">نسبة الإكمال</TableHead>
+                    <TableHead className="text-right">التقييم</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {topDoctors.map((doctor, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium text-right hidden sm:table-cell">{doctor.name}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="sm:hidden font-medium">{doctor.name}</div>
+                        <div className="text-sm text-muted-foreground">{doctor.specialty}</div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 items-center justify-center">
+                          {doctor.totalAppointments}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right hidden md:table-cell">
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 items-center justify-center">
+                          {doctor.completedAppointments}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right hidden md:table-cell">
+                        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                          {doctor.cancelledAppointments}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right hidden lg:table-cell">
+                        <span className="text-green-600 font-semibold">
+                          {((doctor.completedAppointments / doctor.totalAppointments) * 100).toFixed(1)}%
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center gap-1 justify-center  ">
+                          <span className="font-semibold">{doctor.rating}</span>
+                          <span className="text-yellow-500">★</span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Appointment Statistics Cards */}
+        <div className="px-4 pb-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-right">إجمالي الحجوزات</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-primary text-right">
+                {(appointmentStats.completedBookings + appointmentStats.scheduledBookings + appointmentStats.cancelledBookings).toLocaleString('ar-EG')}
+              </div>
+              <p className="text-xs text-muted-foreground text-right mt-1">
+                جميع المواعيد المسجلة
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-right">المواعيد المكتملة</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600 text-right">
+                {appointmentStats.completedBookings.toLocaleString('ar-EG')}
+              </div>
+              <p className="text-xs text-green-600 text-right mt-1">
+                نسبة الإكمال: {appointmentStats.completionRate}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-right">المواعيد المحجوزة</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-primary text-right">
+                {appointmentStats.scheduledBookings.toLocaleString('ar-EG')}
+              </div>
+              <p className="text-xs text-primary text-right mt-1">
+                قيد الانتظار
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-right">المواعيد الملغاة</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600 text-right">
+                {appointmentStats.cancelledBookings.toLocaleString('ar-EG')}
+              </div>
+              <p className="text-xs text-red-600 text-right mt-1">
+                نسبة الإلغاء: {appointmentStats.cancellationRate}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+        </div>
+
+       
+
+        {/* Pie Chart - Appointment Status Distribution */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-primary text-right">توزيع حالات المواعيد</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+              {/* Pie Chart */}
+              <div className="h-96 flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={appointmentStatusData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={renderCustomLabel}
+                      outerRadius={140}
+                      innerRadius={60}
+                      fill="#8884d8"
+                      dataKey="value"
+                      paddingAngle={2}
+                    >
+                      {appointmentStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={3} stroke="#fff" />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-card border-2 border-border rounded-lg shadow-xl p-4" dir="rtl">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div 
+                                  className="w-4 h-4 rounded-full" 
+                                  style={{ backgroundColor: data.color }}
+                                />
+                                <p className="font-semibold text-lg">{data.name}</p>
+                              </div>
+                              <p className="text-sm mb-1">
+                                العدد: <span className="font-bold">{data.value.toLocaleString('ar-EG')}</span> موعد
+                              </p>
+                              <p className="text-sm">
+                                النسبة: <span className="font-bold" style={{ color: data.color }}>{data.percentage}</span>
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Legend and Stats */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg text-right">تفاصيل التوزيع</h3>
+                {appointmentStatusData.map((item, index) => (
+                  <div 
+                    key={index} 
+                    className="flex items-center justify-between p-5 bg-gradient-to-l from-muted/30 to-transparent rounded-xl border-2 border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-md"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <p className="font-semibold text-lg">{item.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {item.value.toLocaleString('ar-EG')} موعد
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-left">
+                        <p className="text-3xl font-bold" style={{ color: item.color }}>
+                          {item.percentage}
+                        </p>
+                      </div>
+                      <div
+                        className="w-6 h-6 rounded-full shadow-lg ring-2 ring-white"
+                        style={{ backgroundColor: item.color }}
+                      />
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Summary Box */}
+                <div className="mt-6 p-5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl border-2 border-primary/20">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-1 h-6 bg-primary rounded-full" />
+                    <p className="text-sm font-semibold text-primary text-right">ملخص الإحصائيات</p>
+                  </div>
+                  <div className="space-y-2 text-right">
+                    <p className="text-sm">
+                      • إجمالي المواعيد: <span className="font-bold text-primary">
+                        {(appointmentStats.completedBookings + appointmentStats.scheduledBookings + appointmentStats.cancelledBookings).toLocaleString('ar-EG')}
+                      </span>
+                    </p>
+                    <p className="text-sm">
+                      • معدل النجاح: <span className="font-bold text-green-600">{appointmentStats.completionRate}</span>
+                    </p>
+                    <p className="text-sm">
+                      • معدل الإلغاء: <span className="font-bold text-red-600">{appointmentStats.cancellationRate}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 <div className="px-4 pb-6"></div>
       {/* Additional Statistics */}
       <div className="px-4 pb-6">

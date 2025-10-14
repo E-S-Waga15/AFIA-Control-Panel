@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Filter, Plus, Edit, Trash2, History, CheckCircle, XCircle, Loader, Loader2, Eye, EyeOff } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
+import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import {
   Table,
@@ -606,7 +607,7 @@ export function UserManagement() {
                         key={governorate.id}
                         value={governorate.id.toString()}
                       >
-                        {isRTL ? governorate.nameAr : governorate.nameEn}
+                      { governorate.name}
                       </SelectItem>
                     ))}
                   </RTLSelect>
@@ -1050,11 +1051,13 @@ export function UserManagement() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setShowMedicalHistory(user)}
+                            asChild
                             className="mobile-button bg-primary/10 hover:bg-primary/20 text-primary text-sm"
                           >
-                            <History className="w-3 h-3 mr-1" />
-                            {t('users.medicalHistory')}
+                            <Link to={`/user-information/${user.id}`}>
+                              <History className="w-3 h-3 mr-1" />
+                              {t('users.medicalHistory')}
+                            </Link>
                           </Button>
 
                           <Button
@@ -1205,10 +1208,12 @@ export function UserManagement() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => setShowMedicalHistory(user)}
+                              asChild
                               className="bg-primary/10 hover:bg-primary/20 text-primary"
                             >
-                              <History className="w-4 h-4" />
+                              <Link to={`/user-information/${user.id}`}>
+                                <History className="w-4 h-4" />
+                              </Link>
                             </Button>
                             <Button
                             variant="outline"

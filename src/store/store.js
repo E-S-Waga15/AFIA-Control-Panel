@@ -1,5 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import userReducer from './slices/userSlice';
+import userProfileReducer from './slices/userProfileSlice';
 import appointmentsReducer from './slices/appointmentsSlice';
 import authReducer from './slices/authSlice';
 import specialtiesReducer from './slices/specialtiesSlice';
@@ -11,6 +12,7 @@ import usersDisplayReducer from './slices/usersDisplaySlice';
 const store = configureStore({
     reducer: {
         user: userReducer,
+        userProfile: userProfileReducer,
         appointments: appointmentsReducer,
         auth: authReducer,
         specialties: specialtiesReducer,
