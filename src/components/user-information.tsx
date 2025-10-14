@@ -8,8 +8,8 @@ import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Printer, Search, FileText, ArrowRight } from 'lucide-react';
 import { fetchUserProfile, clearUserProfile } from '../store/slices/userProfileSlice';
-// استيراد صورة اللوغو كمتغير
-const logoImage = '/logo2.png';
+import logoImage from '../assets/logo2.png';
+
 // بيانات احتياطية في حالة عدم توفر البيانات من API
 const fallbackMockData = {
   id: '0',
