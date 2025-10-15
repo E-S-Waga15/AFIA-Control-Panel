@@ -14,6 +14,8 @@
     "actions": "Actions",
     "clear": "Clear",
     "apply": "Apply",
+    "confirm": "Confirm",
+    "close": "Close",
     "error": "Error",
     "page": "Page",
     "of": "of",
@@ -186,7 +188,9 @@
     "doctorName": "Top rated doctor",
     "rating": "Rating",
     "reviews": "Reviews",
-    "averageRating": "Average Rating"
+    "averageRating": "Average Rating",
+    "doctorReviews": "Doctor Reviews & Details",
+    "patientReviews": "Patient Reviews"
   },
   "dashboard": {
     "title": "Dashboard Overview",

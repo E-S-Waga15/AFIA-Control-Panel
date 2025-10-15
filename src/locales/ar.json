@@ -212,7 +212,9 @@
     "doctorName": "   الطبيب الاعلى تقيما",
     "rating": "التقييم",
     "reviews": "المراجعات",
-    "averageRating": "متوسط التقييم"
+    "averageRating": "متوسط التقييم",
+    "doctorReviews": "مراجعات وتفاصيل الطبيب",
+    "patientReviews": "مراجعات المرضى"
   },
   "dashboard": {
     "title": "نظرة عامة على لوحة التحكم",
