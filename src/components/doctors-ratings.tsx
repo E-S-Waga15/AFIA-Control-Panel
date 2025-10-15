@@ -161,43 +161,43 @@ export function DoctorsRatings() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header Stats */}
-      <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'}`}>
-        <Card className="bg-white shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('ratings.doctorName')}</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+      <div className={`grid gap-2 ${isMobile ? 'grid-cols-2 gap-2' : 'grid-cols-1 md:grid-cols-3 gap-3'}`}>
+        <Card className={`bg-white shadow-sm ${isMobile ? 'p-3' : ''}`}>
+          <CardHeader className={`flex flex-row items-center justify-between space-y-0 pb-1 ${isMobile ? 'p-2' : 'pb-2'}`}>
+            <CardTitle className={`text-xs font-medium ${isMobile ? 'text-xs' : 'text-sm'}`}>{t('ratings.doctorName')}</CardTitle>
+            <TrendingUp className={`h-3 w-3 text-muted-foreground ${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
           </CardHeader>
-          <CardContent>
-            <div className={`font-bold ${isMobile ? 'text-lg' : 'text-2xl'}`}>{doctors[0]?.name}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className={isMobile ? 'p-2 pt-0' : ''}>
+            <div className={`font-bold ${isMobile ? 'text-sm' : 'text-lg sm:text-2xl'}`}>{doctors[0]?.name}</div>
+            <p className={`text-xs text-muted-foreground ${isMobile ? 'text-xs' : 'text-xs'}`}>
               {doctors[0]?.averageRating.toFixed(1)} ⭐ ({doctors[0]?.totalReviews} reviews)
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('ratings.averageRating')}</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
+        <Card className={`bg-white shadow-sm ${isMobile ? 'p-3' : ''}`}>
+          <CardHeader className={`flex flex-row items-center justify-between space-y-0 pb-1 ${isMobile ? 'p-2' : 'pb-2'}`}>
+            <CardTitle className={`text-xs font-medium ${isMobile ? 'text-xs' : 'text-sm'}`}>{t('ratings.averageRating')}</CardTitle>
+            <Star className={`h-3 w-3 text-muted-foreground ${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
           </CardHeader>
-          <CardContent>
-            <div className={`font-bold ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+          <CardContent className={isMobile ? 'p-2 pt-0' : ''}>
+            <div className={`font-bold ${isMobile ? 'text-sm' : 'text-lg sm:text-2xl'}`}>
               {summaryStats.globalAverageRating.toFixed(1)}
             </div>
-            <p className="text-xs text-muted-foreground">{t('ratings.reviews')}</p>
+            <p className={`text-xs text-muted-foreground ${isMobile ? 'text-xs' : 'text-xs'}`}>{t('ratings.reviews')}</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('ratings.reviews')}</CardTitle>
-            <MessageCircle className="h-4 w-4 text-muted-foreground" />
+        <Card className={`bg-white shadow-sm ${isMobile ? 'p-3 col-span-2' : ''}`}>
+          <CardHeader className={`flex flex-row items-center justify-between space-y-0 pb-1 ${isMobile ? 'p-2' : 'pb-2'}`}>
+            <CardTitle className={`text-xs font-medium ${isMobile ? 'text-xs' : 'text-sm'}`}>{t('ratings.reviews')}</CardTitle>
+            <MessageCircle className={`h-3 w-3 text-muted-foreground ${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
           </CardHeader>
-          <CardContent>
-            <div className={`font-bold ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+          <CardContent className={isMobile ? 'p-2 pt-0' : ''}>
+            <div className={`font-bold ${isMobile ? 'text-sm' : 'text-lg sm:text-2xl'}`}>
               {doctors.reduce((sum, doc) => sum + doc.totalReviews, 0)}
             </div>
-            <p className="text-xs text-muted-foreground">{t('ratings.reviews')}</p>
+            <p className={`text-xs text-muted-foreground ${isMobile ? 'text-xs' : 'text-xs'}`}>{t('ratings.reviews')}</p>
           </CardContent>
         </Card>
       </div>
@@ -210,7 +210,7 @@ export function DoctorsRatings() {
             {t('ratings.title')}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3 sm:space-y-4">
+        <CardContent className="space-y-3 sm:space-y-4 ">
           {doctors.map((doctor, index) => (
             <div
               key={doctor.id}
@@ -275,7 +275,7 @@ export function DoctorsRatings() {
           <div className="space-y-4 sm:space-y-6">
             {/* Doctor Header */}
             <div className={`p-3 sm:p-4 bg-muted rounded-lg ${isMobile ? 'flex flex-col gap-3 items-center' : 'flex items-center  gap-4'}`}>
-            <Avatar className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'}`}>
+              <Avatar className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'}`}>
                 <AvatarImage src={selectedDoctor.profilePicture || undefined} />
                 <AvatarFallback>{getInitials(selectedDoctor.name)}</AvatarFallback>
               </Avatar>
