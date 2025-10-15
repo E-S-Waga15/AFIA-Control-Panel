@@ -17,6 +17,9 @@
     "confirm": "تأكيد",
     "close": "إغلاق",
     "error": "خطأ",
+    "page": "صفحة",
+    "of": "من",
+    "pagination": "صفحات",
     "invalidFileType": "يرجى اختيار ملف صورة صحيح",
     "fileTooLarge": "يجب أن يكون حجم الملف أقل من 5 ميجابايت",
     "noImageSelected": "لم يتم اختيار صورة"
@@ -119,7 +122,14 @@
     "allStatuses": "جميع الحالات",
     "todayAppointments": "مواعيد اليوم",
     "upcomingAppointments": "المواعيد القادمة",
-    "pastAppointments": "المواعيد السابقة"
+    "pastAppointments": "المواعيد السابقة",
+    "loadingAppointments": "جاري تحميل المواعيد...",
+    "errorLoading": "خطأ في تحميل المواعيد",
+    "specialization": "التخصص",
+    "diagnostics": "التشخيصات",
+    "prescribedMedicines": "الأدوية الموصوفة",
+    "units": "وحدة",
+    "taken": "تم أخذ"
   },
   "pharmacy": {
     "title": "الوصفات الطبية",

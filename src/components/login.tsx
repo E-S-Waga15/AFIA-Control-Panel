@@ -11,7 +11,7 @@ import { LanguageToggle } from './LanguageToggle';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaCheckCircle } from 'react-icons/fa';
-
+import { Eye, EyeOff } from 'lucide-react';
 interface LoginProps {
   onLogin: (username: string, role: string) => void;
 }
@@ -19,6 +19,7 @@ interface LoginProps {
 export function Login({ onLogin }: LoginProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const { t } = useLanguage();
 
   const dispatch = useDispatch();
@@ -57,7 +58,7 @@ export function Login({ onLogin }: LoginProps) {
         }
       });
     }
-  }, [token, account_type, message]);
+  }, [token, account_type, message, onLogin, username]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5 p-4">
@@ -87,14 +88,31 @@ export function Login({ onLogin }: LoginProps) {
 
             <div className="space-y-2">
               <Label htmlFor="password">{t('login.password')}</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={t('login.password')}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={t('login.password')}
+                  required
+                  className="ml-2"
+                />
+               
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-6 w-6" />
+                  ) : (
+                    <Eye className="h-6 w-6" />
+                  )}
+                    <div className='w-4'></div>
+                </button>
+              
+              </div>
             </div>
 
             {error && (

@@ -1,81 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Button } from './ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { RTLDialog } from './ui/rtl-dialog';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { CalendarDays, Eye, Filter } from 'lucide-react';
+import { CalendarDays, Eye, Filter, ChevronLeft, ChevronRight, Loader2, X } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { RTLSelect } from './ui/rtl-select';
+import {
+  fetchAppointments,
+  setFilters,
+  clearFilters,
+  setCurrentPage
+} from '../store/slices/appointmentsSlice';
 
 type AppointmentStatus = 'upcoming' | 'completed' | 'cancelled';
 
 interface Appointment {
-  id: string;
-  patientName: string;
-  doctorName: string;
-  date: string;
+  doctor_name: string;
+  patient_name: string;
+  specialization: Array<{
+    id: number;
+    name: string;
+  }>;
+  diagnostics: Array<{
+    name: string;
+    image_path: string;
+  }>;
   time: string;
+  date: string;
+  medicines: Array<{
+    medicine_name: string;
+    quantity: number;
+    number_of_taken_doses: number;
+  }>;
   status: AppointmentStatus;
-  diagnosis?: string;
-  prescribedMedicines?: string[];
-  notes?: string;
 }
 
-const mockAppointments: Appointment[] = [
-  {
-    id: '1',
-    patientName: 'John Smith',
-    doctorName: 'Dr. Sarah Johnson',
-    date: '2024-01-15',
-    time: '10:00 AM',
-    status: 'upcoming',
-  },
-  {
-    id: '2',
-    patientName: 'Emily Davis',
-    doctorName: 'Dr. Michael Chen',
-    date: '2024-01-14',
-    time: '2:30 PM',
-    status: 'completed',
-    diagnosis: 'Hypertension follow-up',
-    prescribedMedicines: ['Lisinopril 10mg', 'Hydrochlorothiazide 25mg'],
-    notes: 'Blood pressure well controlled. Continue current medication regimen.'
-  },
-  {
-    id: '3',
-    patientName: 'Robert Wilson',
-    doctorName: 'Dr. Sarah Johnson',
-    date: '2024-01-13',
-    time: '11:15 AM',
-    status: 'completed',
-    diagnosis: 'Annual check-up',
-    prescribedMedicines: ['Vitamin D3 1000IU'],
-    notes: 'Overall health good. Recommend regular exercise and vitamin D supplementation.'
-  },
-  {
-    id: '4',
-    patientName: 'Lisa Brown',
-    doctorName: 'Dr. Jennifer Lee',
-    date: '2024-01-12',
-    time: '9:00 AM',
-    status: 'cancelled',
-  }
-];
+interface PaginationInfo {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+}
 
 const doctors = ['All Doctors', 'Dr. Sarah Johnson', 'Dr. Michael Chen', 'Dr. Jennifer Lee'];
 
 export function AppointmentsManagement() {
   const { t, isRTL } = useLanguage();
-  const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments);
-  const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>(mockAppointments);
-  const [selectedDoctor, setSelectedDoctor] = useState('All Doctors');
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('all');
+  const dispatch = useDispatch();
+
+  // Redux state
+  const {
+    appointments,
+    loading,
+    error,
+    pagination,
+    filters
+  } = useSelector((state) => state.appointments);
+
+  // Local state for UI
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
@@ -106,29 +96,29 @@ export function AppointmentsManagement() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Fetch appointments when filters change
+  useEffect(() => {
+    dispatch(fetchAppointments({
+      date: filters.date,
+      status: filters.status !== 'all' ? filters.status : '',
+      page: filters.page
+    }));
+  }, [dispatch, filters]);
+
   const applyFilters = () => {
-    let filtered = appointments;
-
-    if (selectedDoctor !== 'All Doctors') {
-      filtered = filtered.filter(apt => apt.doctorName === selectedDoctor);
-    }
-
-    if (selectedDate) {
-      filtered = filtered.filter(apt => apt.date === selectedDate);
-    }
-
-    if (selectedStatus !== 'all') {
-      filtered = filtered.filter(apt => apt.status === selectedStatus);
-    }
-
-    setFilteredAppointments(filtered);
+    dispatch(setFilters({
+      date: filters.date,
+      status: filters.status,
+      page: 1 // Reset to first page when applying filters
+    }));
   };
 
   const clearFilters = () => {
-    setSelectedDoctor('All Doctors');
-    setSelectedDate('');
-    setSelectedStatus('all');
-    setFilteredAppointments(appointments);
+    dispatch(clearFilters());
+  };
+
+  const handlePageChange = (newPage: number) => {
+    dispatch(setCurrentPage(newPage));
   };
 
   const viewDetails = (appointment: Appointment) => {
@@ -150,23 +140,26 @@ export function AppointmentsManagement() {
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    const date = new Date(dateStr);
+    const dayNames = isRTL
+      ? ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
+      : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    const dayName = dayNames[date.getDay()];
+    const fullDate = dateStr; // التاريخ بالصيغة الكاملة كما هو مطلوب
+
+    return isRTL ? ` ${fullDate} ${dayName}` : `${fullDate} ${dayName}`;
   };
 
   // مكون عرض الكروت للموبايل
   const MobileAppointmentsCards = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      {filteredAppointments.map((appointment) => (
-        <Card key={appointment.id} className="bg-white shadow-sm">
+      {appointments.map((appointment, index) => (
+        <Card key={index} className="bg-white shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-semibold text-primary">
-                {appointment.patientName}
+                {appointment.patient_name}
               </CardTitle>
               <Badge variant={getStatusBadgeVariant(appointment.status)}>
                 {appointment.status === 'upcoming' ? t('appointments.scheduled') :
@@ -179,7 +172,7 @@ export function AppointmentsManagement() {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-muted-foreground">{t('appointments.doctorName')}:</span>
-                <span className="text-sm">{appointment.doctorName}</span>
+                <span className="text-sm">{appointment.doctor_name}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-muted-foreground">{t('appointments.date')}:</span>
@@ -220,32 +213,19 @@ export function AppointmentsManagement() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <Label>{t('appointments.doctorName')}</Label>
-              <RTLSelect
-                value={selectedDoctor}
-                onValueChange={setSelectedDoctor}
-                placeholder={t('appointments.doctorName')}
-              >
-                {doctors.map(doctor => (
-                  <SelectItem key={doctor} value={doctor}>{doctor}</SelectItem>
-                ))}
-              </RTLSelect>
-            </div>
-            
-            <div>
               <Label>{t('appointments.date')}</Label>
               <Input
                 type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
+                value={filters.date}
+                onChange={(e) => dispatch(setFilters({ date: e.target.value }))}
               />
             </div>
-            
+
             <div>
               <Label>{t('appointments.status')}</Label>
               <RTLSelect
-                value={selectedStatus}
-                onValueChange={setSelectedStatus}
+                value={filters.status}
+                onValueChange={(value) => dispatch(setFilters({ status: value }))}
                 placeholder={t('appointments.status')}
               >
                 <SelectItem value="all">{t('appointments.allStatuses')}</SelectItem>
@@ -254,10 +234,10 @@ export function AppointmentsManagement() {
                 <SelectItem value="cancelled">{t('appointments.cancelled')}</SelectItem>
               </RTLSelect>
             </div>
-            
+
             <div className="flex items-end gap-2">
               <Button onClick={applyFilters}>{t('common.apply')}</Button>
-              <Button variant="outline" onClick={clearFilters}>{t('common.clear')}</Button>
+              <Button variant="outline" onClick={() => window.location.reload()}>{t('common.clear')}</Button>
             </div>
           </div>
         </CardContent>
@@ -268,143 +248,205 @@ export function AppointmentsManagement() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CalendarDays className={`w-5 h-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-            {t('appointments.title')} ({filteredAppointments.length})
+            {t('appointments.title')} ({pagination.total})
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          {/* عرض الجدول في الشاشات الكبيرة */}
-          {!isMobile ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.patientName')}</TableHead>
-                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.doctorName')}</TableHead>
-                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.date')} & {t('appointments.time')}</TableHead>
-                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.status')}</TableHead>
-                  <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAppointments.map((appointment) => (
-                  <TableRow key={appointment.id}>
-                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>{appointment.patientName}</TableCell>
-                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>{appointment.doctorName}</TableCell>
-                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                      <div>
-                        <div>{formatDate(appointment.date)}</div>
-                        <div className="text-sm text-muted-foreground">{appointment.time}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                      <Badge variant={getStatusBadgeVariant(appointment.status)}>
-                        {appointment.status === 'upcoming' ? t('appointments.scheduled') :
-                         appointment.status === 'completed' ? t('appointments.completed') :
-                         t('appointments.cancelled')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => viewDetails(appointment)}
-                        className="flex items-center gap-2"
-                      >
-                        <Eye className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-                        {t('pharmacy.viewDetails')}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            /* عرض الكروت في الموبايل */
-            <div className="p-4">
-              <MobileAppointmentsCards />
+          {loading ? (
+            <div className="p-6 text-center">
+              <div className="flex items-center justify-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>{t('appointments.loadingAppointments')}</span>
+              </div>
             </div>
+          ) : error ? (
+            <div className="p-6 text-center text-red-500">{t('appointments.errorLoading')}: {error}</div>
+          ) : (
+            <>
+              {/* عرض الجدول في الشاشات الكبيرة */}
+              {!isMobile ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.patientName')}</TableHead>
+                      <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.doctorName')}</TableHead>
+                      <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.date')} & {t('appointments.time')}</TableHead>
+                      <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.status')}</TableHead>
+                      <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {appointments.map((appointment, index) => (
+                      <TableRow key={index}>
+                        <TableCell className={isRTL ? 'text-right' : 'text-left'}>{appointment.patient_name}</TableCell>
+                        <TableCell className={isRTL ? 'text-right' : 'text-left'}>{appointment.doctor_name}</TableCell>
+                        <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                          <div>
+                            <div>{formatDate(appointment.date)}</div>
+                            <div className="text-sm text-muted-foreground">{appointment.time}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                          <Badge variant={getStatusBadgeVariant(appointment.status)}>
+                            {appointment.status === 'upcoming' ? t('appointments.scheduled') :
+                             appointment.status === 'completed' ? t('appointments.completed') :
+                             t('appointments.cancelled')}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => viewDetails(appointment)}
+                            className="flex items-center gap-2"
+                          >
+                            <Eye className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                            {t('pharmacy.viewDetails')}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                /* عرض الكروت في الموبايل */
+                <div className="p-4">
+                  <MobileAppointmentsCards />
+                </div>
+              )}
+
+              {/* Pagination */}
+              {pagination.last_page > 1 && (
+                <div className="p-4 flex items-center justify-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(pagination.current_page + 1)}
+                  
+                    disabled={pagination.current_page >= pagination.last_page}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  
+                    {isRTL ? 'التالي' : 'Next'}
+                  </Button>
+
+                  <span className="text-sm text-muted-foreground">
+                    {t('common.page')} {pagination.current_page} {t('common.of')} {pagination.last_page} {t('common.pagination')}
+                  </span>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(pagination.current_page - 1)}
+                    disabled={pagination.current_page <= 1}
+                  >
+                    {isRTL ? 'السابق' : 'Previous'}
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
 
       {/* Appointment Details Dialog */}
-      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{t('appointments.title')} {t('pharmacy.viewDetails')}</DialogTitle>
-          </DialogHeader>
-          
-          {selectedAppointment && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>{t('appointments.patientName')}</Label>
-                  <div className="p-2 bg-muted rounded">{selectedAppointment.patientName}</div>
-                </div>
-                <div>
-                  <Label>{t('appointments.doctorName')}</Label>
-                  <div className="p-2 bg-muted rounded">{selectedAppointment.doctorName}</div>
-                </div>
+      <RTLDialog
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        title={`${t('appointments.title')} ${t('pharmacy.viewDetails')}`}
+        maxWidth={isMobile ? "w-300px" : "max-w-4xl"}
+      >
+        {selectedAppointment && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>{t('appointments.patientName')}</Label>
+                <div className="p-2 bg-muted rounded">{selectedAppointment.patient_name}</div>
               </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label>{t('appointments.date')}</Label>
-                  <div className="p-2 bg-muted rounded">{formatDate(selectedAppointment.date)}</div>
-                </div>
-                <div>
-                  <Label>Time</Label>
-                  <div className="p-2 bg-muted rounded">{selectedAppointment.time}</div>
-                </div>
-                <div>
-                  <Label>Status</Label>
-                  <div className="p-2">
-                    <Badge variant={getStatusBadgeVariant(selectedAppointment.status)}>
-                      {selectedAppointment.status}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-
-              {selectedAppointment.status === 'completed' && (
-                <>
-                  <div>
-                    <Label>Diagnosis</Label>
-                    <div className="p-3 bg-muted rounded mt-1">
-                      {selectedAppointment.diagnosis || 'No diagnosis recorded'}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Prescribed Medicines</Label>
-                    <div className="p-3 bg-muted rounded mt-1">
-                      {selectedAppointment.prescribedMedicines && selectedAppointment.prescribedMedicines.length > 0 ? (
-                        <ul className="list-disc list-inside space-y-1">
-                          {selectedAppointment.prescribedMedicines.map((medicine, index) => (
-                            <li key={index}>{medicine}</li>
-                          ))}
-                        </ul>
-                      ) : (
-                        'No medicines prescribed'
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Notes</Label>
-                    <div className="p-3 bg-muted rounded mt-1">
-                      {selectedAppointment.notes || 'No additional notes'}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              <div className="flex justify-end">
-                <Button onClick={() => setIsDetailsOpen(false)}>Close</Button>
+              <div>
+                <Label>{t('appointments.doctorName')}</Label>
+                <div className="p-2 bg-muted rounded">{selectedAppointment.doctor_name}</div>
               </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label>{t('appointments.date')}</Label>
+                <div className="p-2 bg-muted rounded">{formatDate(selectedAppointment.date)}</div>
+              </div>
+              <div>
+                <Label>{t('appointments.time')}</Label>
+                <div className="p-2 bg-muted rounded">{selectedAppointment.time}</div>
+              </div>
+              <div>
+                <Label>Status</Label>
+                <div className="p-2">
+                  <Badge variant={getStatusBadgeVariant(selectedAppointment.status)}>
+                    {selectedAppointment.status}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            {selectedAppointment.specialization && selectedAppointment.specialization.length > 0 && (
+              <div >
+                <Label>{t('appointments.specialization')}</Label>
+                <div className="p-3 bg-muted rounded mt-1 ">
+                  {selectedAppointment.specialization.map((spec, index) => (
+                    <span key={index} className="inline-block bg-primary/10 text-primary px-2 py-1 rounded text-sm mr-2 mb-1">
+                      {spec.name}
+                    <span>   </span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {selectedAppointment.diagnostics && selectedAppointment.diagnostics.length > 0 && (
+              <div>
+               <Label>{t('appointments.diagnostics')}</Label>
+                <div className="p-3 bg-muted rounded mt-1">
+                  {selectedAppointment.diagnostics.map((diagnostic, index) => (
+                    <div key={index} className="mb-2">
+                      <div className="font-medium">{diagnostic.name}</div>
+                      {diagnostic.image_path && (
+                        <img
+                          src={diagnostic.image_path}
+                          alt={diagnostic.name}
+                          className="w-20 h-20 object-cover rounded mt-1"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {selectedAppointment.medicines && selectedAppointment.medicines.length > 0 && (
+              <div>
+               <Label>{t('appointments.prescribedMedicines')}</Label>
+                <div className="p-3 bg-muted rounded mt-1">
+                <div className="space-y-2">
+                  {selectedAppointment.medicines.map((medicine, index) => (
+                    <div key={index} className="flex justify-between items-center p-2 bg-background rounded">
+                      <span>{medicine.medicine_name}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {medicine.quantity} {t('appointments.units')} ({medicine.number_of_taken_doses} {t('appointments.taken')})
+                      </span>
+                    </div>
+                  ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <Button onClick={() => setIsDetailsOpen(false)}>{t('common.close')}</Button>
+            </div>
+          </div>
+        )}
+      </RTLDialog>
     </div>
   );
 }

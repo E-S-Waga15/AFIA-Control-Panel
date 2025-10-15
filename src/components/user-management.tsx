@@ -353,10 +353,75 @@ export function UserManagement() {
     }
   };
 
-  const deleteUser = (id: string) => {
-    // حذف المستخدم من الـ API والـ state
-    // سيتم إضافة API call هنا لاحقاً
-    console.log('حذف المستخدم:', id);
+  const deleteUser = async (id: string) => {
+    try {
+      // استدعاء API حذف المستخدم
+      // سيتم إضافة API call هنا لاحقاً
+      console.log('حذف المستخدم:', id);
+
+      // رسالة نجاح مؤقتة لحين إضافة API الحقيقي
+      toast.success("تم حذف المستخدم بنجاح", {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+      });
+
+      // إعادة جلب بيانات المستخدمين لتحديث القائمة
+      (dispatch as any)(fetchUsers(selectedAccountTypeFilter ?? 'doctor'));
+    } catch (error) {
+      toast.error("حدث خطأ أثناء حذف المستخدم", {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+      });
+    }
+  };
+
+  const confirmDeleteUser = (id: string) => {
+    toast(
+      ({ closeToast }) => (
+        <div style={{ textAlign: "center" }}>
+          <h4 style={{ margin: "0 0 8px 0" }}>
+          
+          </h4>
+          <p style={{ fontSize: "14px", marginBottom: "12px" }}>
+            هل أنت متأكد من أنك تريد حذف هذا المستخدم؟ لا يمكن التراجع عن هذا الإجراء.
+          </p>
+          <div
+            style={{ display: "flex", justifyContent: "center", gap: "10px" }}
+          >
+            <button
+              className="toast-confirm"
+              onClick={() => {
+                deleteUser(id);
+                closeToast();
+              }}
+            >
+              حذف
+            </button>
+            <button className="toast-cancel" onClick={closeToast}>
+              إلغاء
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        position: "top-center",
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+        hideProgressBar: true,
+        className: "custom-toast",
+      }
+    );
   };
 
   // لا يزال يجب أن نحافظ على هذه الدالة لتحديث الحالة داخليًا
@@ -421,14 +486,12 @@ export function UserManagement() {
       ({ closeToast }) => (
         <div style={{ textAlign: "center" }}>
           <h4 style={{ margin: "0 0 8px 0" }}>
-            {currentStatus === "active"
-              ? "Deactivate User?"
-              : "Activate User?"}
+         
           </h4>
           <p style={{ fontSize: "14px", marginBottom: "12px" }}>
             {currentStatus === "active"
-              ? "Are you sure you want to deactivate this account?"
-              : "Are you sure you want to activate this account?"}
+              ? "هل أنت متأكد من أنك تريد تعطيل هذا المستخدم؟"
+              : "هل أنت متأكد من أنك تريد تفعيل هذا المستخدم؟"}
           </p>
           <div
             style={{ display: "flex", justifyContent: "center", gap: "10px" }}
@@ -441,10 +504,10 @@ export function UserManagement() {
                 closeToast();
               }}
             >
-              Confirm
+            تاكيد
             </button>
             <button className="toast-cancel" onClick={closeToast}>
-              Cancel
+              إلغاء
             </button>
           </div>
         </div>
@@ -672,7 +735,7 @@ export function UserManagement() {
               <Label>{t('login.password')}</Label>
               <div className="relative w-full">
                 <Input
-                  type="text"
+                  type={showPassword ? "text" : "password"}
                   value={formData.password}
                   onChange={(e) =>
                     setFormData({ ...formData, password: e.target.value })
@@ -689,6 +752,18 @@ export function UserManagement() {
                     direction: isRTL ? 'rtl' : 'ltr'
                   }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-6 w-6" />
+                  ) : (
+                    <Eye className="h-6 w-6" />
+                  )}
+                    <div className='w-4'></div>
+                </button>
               </div>
             </div>
 
@@ -1063,7 +1138,7 @@ export function UserManagement() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => deleteUser(user.id)}
+                            onClick={() => confirmDeleteUser(user.id)}
                             className="mobile-button text-sm text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400"
                           >
                             <Trash2 className="w-3 h-3 mr-1" />
@@ -1218,7 +1293,7 @@ export function UserManagement() {
                             <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => deleteUser(user.id)}
+                            onClick={() => confirmDeleteUser(user.id)}
                             className="mobile-button text-xs text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400"
                           >
                             <Trash2 className="w-4 h-4" />

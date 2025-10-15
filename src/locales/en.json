@@ -15,6 +15,9 @@
     "clear": "Clear",
     "apply": "Apply",
     "error": "Error",
+    "page": "Page",
+    "of": "of",
+    "pagination": "pages",
     "invalidFileType": "Please select a valid image file",
     "fileTooLarge": "File size must be less than 5MB",
     "noImageSelected": "No image selected"
@@ -93,6 +96,7 @@
     "title": "Appointments Management",
     "addAppointment": "Add Appointment",
     "editAppointment": "Edit Appointment",
+    "patientName": "Patient Name",
     "doctorName": "Doctor Name",
     "date": "Date",
     "time": "Time",
@@ -113,7 +117,14 @@
     "searchAppointments": "Search appointments...",
     "filterByStatus": "Filter by status",
     "allStatuses": "All Statuses",
-    "todayAppointments": "Today's Appointments"
+    "todayAppointments": "Today's Appointments",
+    "loadingAppointments": "Loading appointments...",
+    "errorLoading": "Error loading appointments",
+    "specialization": "Specialization",
+    "diagnostics": "Diagnostics",
+    "prescribedMedicines": "Prescribed Medicines",
+    "units": "units",
+    "taken": "taken"
   },
   "pharmacy": {
     "title": "Prescriptions",

@@ -31,7 +31,7 @@ export const RTLDialog: React.FC<RTLDialogProps> = ({
       <DialogContent className={`${className} ${maxWidth} [&>button]:hidden max-h-[80vh] sm:max-h-[90vh] overflow-hidden flex flex-col`} dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="flex-1 overflow-y-auto pl-2">
           <DialogHeader className="relative p-2">
-            <DialogTitle className={`${isRTL ? 'text-right pr-8' : 'text-left pl-0'}`}>
+            <DialogTitle className={`${isRTL ? 'text-right pr-0 mb-4' : 'text-left pl-0'}`}>
               {title}
             </DialogTitle>
             <Button

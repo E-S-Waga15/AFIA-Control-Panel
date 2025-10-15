@@ -1,4 +1,13 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { appointmentsAPI } from '../../services/api/appointmentsAPI';
+
+// Async thunks for API calls
+export const fetchAppointments = createAsyncThunk(
+  'appointments/fetchAppointments',
+  async ({ date, status, page = 1, per_page = 10 } = {}) => {
+    return await appointmentsAPI.getAppointments({ date, status, page, per_page });
+  }
+);
 
 const appointmentsSlice = createSlice({
   name: 'appointments',
@@ -6,11 +15,33 @@ const appointmentsSlice = createSlice({
     appointments: [],
     loading: false,
     error: null,
+    pagination: {
+      current_page: 1,
+      last_page: 1,
+      per_page: 10,
+      total: 0
+    },
+    filters: {
+      date: '',
+      status: '',
+      page: 1
+    }
   },
   reducers: {
-    setAppointments: (state, action) => {
-      state.appointments = action.payload;
+    setFilters: (state, action) => {
+      state.filters = { ...state.filters, ...action.payload };
     },
+    clearFilters: (state) => {
+      state.filters = {
+        date: '',
+        status: 'all', // تعيين القيمة الافتراضية للحالة إلى 'all'
+        page: 1
+      };
+    },
+    setCurrentPage: (state, action) => {
+      state.filters.page = action.payload;
+    },
+    // Keep existing reducers for local state management if needed
     addAppointment: (state, action) => {
       state.appointments.push(action.payload);
     },
@@ -23,14 +54,32 @@ const appointmentsSlice = createSlice({
     deleteAppointment: (state, action) => {
       state.appointments = state.appointments.filter(appointment => appointment.id !== action.payload);
     },
-    setLoading: (state, action) => {
-      state.loading = action.payload;
-    },
-    setError: (state, action) => {
-      state.error = action.payload;
-    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchAppointments.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAppointments.fulfilled, (state, action) => {
+        state.loading = false;
+        state.appointments = action.payload.data;
+        state.pagination = action.payload.pagination;
+      })
+      .addCase(fetchAppointments.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      });
   },
 });
 
-export const { setAppointments, addAppointment, updateAppointment, deleteAppointment, setLoading, setError } = appointmentsSlice.actions;
+export const {
+  setFilters,
+  clearFilters,
+  setCurrentPage,
+  addAppointment,
+  updateAppointment,
+  deleteAppointment
+} = appointmentsSlice.actions;
+
 export default appointmentsSlice.reducer;
