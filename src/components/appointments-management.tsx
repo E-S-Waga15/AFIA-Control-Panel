@@ -373,7 +373,7 @@ export function AppointmentsManagement() {
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label>{t('appointments.date')}</Label>
-                <div className="p-2 bg-muted rounded">{formatDate(selectedAppointment.date)}</div>
+                <div className={`p-2 bg-muted rounded ${isMobile ? 'text-sm' : ''}`}>{formatDate(selectedAppointment.date)}</div>
               </div>
               <div>
                 <Label>{t('appointments.time')}</Label>
