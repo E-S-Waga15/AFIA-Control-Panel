@@ -8,6 +8,7 @@ import addSpecialtyReducer from './slices/addSpecialtySlice';
 import deleteSpecialtyReducer from './slices/deleteSpecialtySlice';
 import governoratesReducer from './slices/governoratesSlice.js';
 import usersDisplayReducer from './slices/usersDisplaySlice';
+import ratingReducer from './slices/ratingSlice';
 
 const store = configureStore({
     reducer: {
@@ -20,6 +21,7 @@ const store = configureStore({
         deleteSpecialty: deleteSpecialtyReducer,
         usersDisplay: usersDisplayReducer,
         governorates: governoratesReducer,
+        ratings: ratingReducer,
     },
 });
 

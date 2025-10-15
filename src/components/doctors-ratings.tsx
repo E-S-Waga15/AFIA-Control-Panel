@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
@@ -6,132 +7,36 @@ import { Badge } from './ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Star, Eye, MessageCircle, TrendingUp } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { fetchRatingStats } from '../store/slices/ratingSlice';
 
 interface Review {
-  id: string;
+  id: number;
   patientName: string;
-  rating: number;
-  comment: string;
+  rating: string;
   date: string;
-  appointmentType: string;
+}
+
+interface Specialty {
+  id: number;
+  name: string;
 }
 
 interface Doctor {
-  id: string;
+  id: number;
   name: string;
-  specialty: string;
-  profilePicture?: string;
+  specialty: Specialty[];
+  profilePicture: string | null;
   averageRating: number;
   totalReviews: number;
   reviews: Review[];
 }
 
-const mockDoctors: Doctor[] = [
-  {
-    id: '1',
-    name: 'Dr. Sarah Johnson',
-    specialty: 'Cardiology',
-    averageRating: 4.8,
-    totalReviews: 127,
-    reviews: [
-      {
-        id: '1',
-        patientName: 'John Smith',
-        rating: 5,
-        comment: 'Excellent doctor! Very thorough examination and clear explanation of my condition. The treatment plan worked perfectly.',
-        date: '2024-01-10',
-        appointmentType: 'Cardiac Check-up'
-      },
-      {
-        id: '2',
-        patientName: 'Emily Davis',
-        rating: 5,
-        comment: 'Dr. Johnson is fantastic. She took the time to answer all my questions and made me feel comfortable throughout the process.',
-        date: '2024-01-08',
-        appointmentType: 'Follow-up'
-      },
-      {
-        id: '3',
-        patientName: 'Robert Wilson',
-        rating: 4,
-        comment: 'Very knowledgeable and professional. The wait time was a bit long, but the consultation was worth it.',
-        date: '2024-01-05',
-        appointmentType: 'Initial Consultation'
-      }
-    ]
-  },
-  {
-    id: '2',
-    name: 'Dr. Michael Chen',
-    specialty: 'Internal Medicine',
-    averageRating: 4.6,
-    totalReviews: 89,
-    reviews: [
-      {
-        id: '4',
-        patientName: 'Lisa Brown',
-        rating: 5,
-        comment: 'Dr. Chen is very attentive and caring. He helped me understand my condition and provided great treatment options.',
-        date: '2024-01-12',
-        appointmentType: 'General Consultation'
-      },
-      {
-        id: '5',
-        patientName: 'Mark Davis',
-        rating: 4,
-        comment: 'Good doctor with solid medical knowledge. Explained everything clearly and was patient with my questions.',
-        date: '2024-01-09',
-        appointmentType: 'Annual Physical'
-      }
-    ]
-  },
-  {
-    id: '3',
-    name: 'Dr. Jennifer Lee',
-    specialty: 'Dermatology',
-    averageRating: 4.9,
-    totalReviews: 156,
-    reviews: [
-      {
-        id: '6',
-        patientName: 'Anna Wilson',
-        rating: 5,
-        comment: 'Outstanding dermatologist! Diagnosed my skin condition accurately and the treatment was very effective.',
-        date: '2024-01-11',
-        appointmentType: 'Skin Consultation'
-      },
-      {
-        id: '7',
-        patientName: 'David Johnson',
-        rating: 5,
-        comment: 'Dr. Lee is amazing. Very thorough examination and gave me excellent advice for my skin care routine.',
-        date: '2024-01-07',
-        appointmentType: 'Acne Treatment'
-      }
-    ]
-  },
-  {
-    id: '4',
-    name: 'Dr. James Rodriguez',
-    specialty: 'Orthopedics',
-    averageRating: 4.4,
-    totalReviews: 73,
-    reviews: [
-      {
-        id: '8',
-        patientName: 'Susan Miller',
-        rating: 4,
-        comment: 'Knowledgeable orthopedic surgeon. The surgery went well and recovery has been smooth.',
-        date: '2024-01-06',
-        appointmentType: 'Post-Surgery Follow-up'
-      }
-    ]
-  }
-];
 
 export function DoctorsRatings() {
   const { t, isRTL } = useLanguage();
-  const [doctors] = useState<Doctor[]>(mockDoctors.sort((a, b) => b.averageRating - a.averageRating));
+  const dispatch = useDispatch();
+  const { summaryStats, doctorsRanking, loading, error } = useSelector((state: any) => state.ratings);
+
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
@@ -162,19 +67,27 @@ export function DoctorsRatings() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Fetch rating stats on component mount
+  useEffect(() => {
+    dispatch(fetchRatingStats());
+  }, [dispatch]);
+
+  const doctors = [...doctorsRanking].sort((a, b) => b.averageRating - a.averageRating);
+
   const viewDetails = (doctor: Doctor) => {
     setSelectedDoctor(doctor);
     setIsDetailsOpen(true);
   };
 
-  const renderStars = (rating: number) => {
+  const renderStars = (rating: number | string) => {
+    const numericRating = typeof rating === 'string' ? parseFloat(rating) : rating;
     return Array.from({ length: 5 }, (_, index) => (
       <Star
         key={index}
         className={`w-4 h-4 ${
-          index < Math.floor(rating)
+          index < Math.floor(numericRating)
             ? 'fill-yellow-400 text-yellow-400'
-            : index < rating
+            : index < numericRating
             ? 'fill-yellow-200 text-yellow-400'
             : 'text-gray-300'
         }`}
@@ -205,6 +118,46 @@ export function DoctorsRatings() {
     return 'text-red-600';
   };
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        <div className="grid gap-3 grid-cols-1 md:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="bg-white shadow-sm">
+              <CardContent className="p-6">
+                <div className="animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        <Card className="bg-red-50 border-red-200">
+          <CardContent className="p-6 text-center">
+            <p className="text-red-600">Error loading rating data: {error}</p>
+            <Button
+              onClick={() => dispatch(fetchRatingStats())}
+              className="mt-4"
+              variant="outline"
+            >
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header Stats */}
@@ -229,7 +182,7 @@ export function DoctorsRatings() {
           </CardHeader>
           <CardContent>
             <div className={`font-bold ${isMobile ? 'text-lg' : 'text-2xl'}`}>
-              {(doctors.reduce((sum, doc) => sum + doc.averageRating, 0) / doctors.length).toFixed(1)}
+              {summaryStats.globalAverageRating.toFixed(1)}
             </div>
             <p className="text-xs text-muted-foreground">{t('ratings.reviews')}</p>
           </CardContent>
@@ -269,14 +222,16 @@ export function DoctorsRatings() {
                     #{index + 1}
                   </span>
                   <Avatar className={`${isMobile ? 'w-10 h-10' : 'w-12 h-12'}`}>
-                    <AvatarImage src={doctor.profilePicture} />
+                    <AvatarImage src={doctor.profilePicture || undefined} />
                     <AvatarFallback>{getInitials(doctor.name)}</AvatarFallback>
                   </Avatar>
                 </div>
 
                 <div className="flex-1">
                   <h3 className={`font-semibold ${isMobile ? 'text-base' : ''}`}>{doctor.name}</h3>
-                  <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-sm'}`}>{doctor.specialty}</p>
+                  <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-sm'}`}>
+                    {doctor.specialty.length > 0 ? doctor.specialty.map(s => s.name).join(', ') : 'No specialty'}
+                  </p>
                 </div>
               </div>
 
@@ -320,12 +275,14 @@ export function DoctorsRatings() {
               {/* Doctor Header */}
               <div className={`p-3 sm:p-4 bg-muted rounded-lg ${isMobile ? 'flex flex-col gap-3' : 'flex items-center gap-4'}`}>
                 <Avatar className={`${isMobile ? 'w-12 h-12 self-center' : 'w-16 h-16'}`}>
-                  <AvatarImage src={selectedDoctor.profilePicture} />
+                  <AvatarImage src={selectedDoctor.profilePicture || undefined} />
                   <AvatarFallback>{getInitials(selectedDoctor.name)}</AvatarFallback>
                 </Avatar>
                 <div className={`flex-1 ${isMobile ? 'text-center' : ''}`}>
                   <h2 className={`font-semibold ${isMobile ? 'text-lg' : 'text-xl'}`}>{selectedDoctor.name}</h2>
-                  <p className={`text-muted-foreground ${isMobile ? 'text-sm' : ''}`}>{selectedDoctor.specialty}</p>
+                  <p className={`text-muted-foreground ${isMobile ? 'text-sm' : ''}`}>
+                    {selectedDoctor.specialty.length > 0 ? selectedDoctor.specialty.map(s => s.name).join(', ') : 'No specialty'}
+                  </p>
                   <div className={`flex items-center gap-2 mt-2 ${isMobile ? 'justify-center' : ''}`}>
                     <div className="flex items-center gap-1">
                       {renderStars(selectedDoctor.averageRating)}
@@ -351,7 +308,6 @@ export function DoctorsRatings() {
                           <div className={isMobile ? 'text-center' : ''}>
                             <div className={`flex items-center gap-2 ${isMobile ? 'justify-center' : ''}`}>
                               <span className={`font-medium ${isMobile ? 'text-sm' : ''}`}>{review.patientName}</span>
-                              <Badge variant="outline" className={isMobile ? 'text-xs' : ''}>{review.appointmentType}</Badge>
                             </div>
                             <div className={`flex items-center gap-1 mt-1 ${isMobile ? 'justify-center' : ''}`}>
                               {renderStars(review.rating)}
@@ -361,7 +317,9 @@ export function DoctorsRatings() {
                             </div>
                           </div>
                         </div>
-                        <p className={`text-sm ${isMobile ? 'text-center leading-relaxed' : ''}`}>{review.comment}</p>
+                        <p className={`text-sm ${isMobile ? 'text-center leading-relaxed' : ''}`}>
+                          Rating: {review.rating}/5.0
+                        </p>
                       </CardContent>
                     </Card>
                   ))}

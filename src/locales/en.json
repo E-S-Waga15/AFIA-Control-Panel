@@ -183,7 +183,7 @@
   },
   "ratings": {
     "title": "Doctor Ratings",
-    "doctorName": "Doctor Name",
+    "doctorName": "Top rated doctor",
     "rating": "Rating",
     "reviews": "Reviews",
     "averageRating": "Average Rating"
