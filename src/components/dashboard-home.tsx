@@ -8,11 +8,27 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Badge } from './ui/badge';
 import { useLanguage } from '../contexts/LanguageContext';
 import { RTLSelect } from './ui/rtl-select';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchSummaryStats, fetchTrendsData, fetchDoctorsStats, setSelectedPeriod } from '../store/slices/dashboardSlice';
 import "../styles/responsive-utils.css";
 
 export function DashboardHome() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const { t, isRTL } = useLanguage();
+  const dispatch = useDispatch();
+
+  // Get data from Redux store
+  const {
+    summaryStats,
+    summaryStatsLoading,
+    summaryStatsError,
+    trendsData,
+    trendsLoading,
+    trendsError,
+    doctorsStats,
+    doctorsStatsLoading,
+    doctorsStatsError
+  } = useSelector((state) => state.dashboard);
 
   // كشف حجم الشاشة مع إعادة التقييم عند تغيير الحجم
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
@@ -33,6 +49,22 @@ export function DashboardHome() {
     const timer = setTimeout(checkMobileOnLoad, 100);
     return () => clearTimeout(timer);
   }, []);
+
+  // جلب البيانات من الـ API عند تحميل المكون
+  React.useEffect(() => {
+    dispatch(fetchSummaryStats());
+    if (selectedPeriod) {
+      dispatch(fetchTrendsData(selectedPeriod));
+    }
+    dispatch(fetchDoctorsStats());
+  }, [dispatch]);
+
+  // جلب بيانات التريندات عند تغيير الفترة
+  React.useEffect(() => {
+    if (selectedPeriod) {
+      dispatch(fetchTrendsData(selectedPeriod));
+    }
+  }, [selectedPeriod, dispatch]);
 
   // إضافة مراقبة لحجم الشاشة مع إعادة التحقق الدوري
   React.useEffect(() => {
@@ -56,76 +88,57 @@ export function DashboardHome() {
     };
   }, []);
 
-  // Mock data for the chart
-  const dailyData = [
-    { date: '2024-01-01', appointments: 45, patients: 32, doctors: 8, pharmacies: 3 },
-    { date: '2024-01-02', appointments: 52, patients: 38, doctors: 8, pharmacies: 3 },
-    { date: '2024-01-03', appointments: 48, patients: 35, doctors: 9, pharmacies: 3 },
-    { date: '2024-01-04', appointments: 61, patients: 42, doctors: 9, pharmacies: 4 },
-    { date: '2024-01-05', appointments: 55, patients: 40, doctors: 10, pharmacies: 4 },
-    { date: '2024-01-06', appointments: 49, patients: 36, doctors: 10, pharmacies: 4 },
-    { date: '2024-01-07', appointments: 58, patients: 44, doctors: 11, pharmacies: 4 },
-    { date: '2024-01-07', appointments: 58, patients: 44, doctors: 11, pharmacies: 4 },
-    { date: '2024-01-07', appointments: 58, patients: 44, doctors: 11, pharmacies: 4 },
-  ];
+  // Mock data for the chart - سيتم استبدالها بالبيانات من الـ API
+  const dailyData = [];
+  const monthlyData = [];
 
-  const monthlyData = [
-    { date: 'Jan 2024', appointments: 1520, patients: 1180, doctors: 45, pharmacies: 12 },
-    { date: 'Feb 2024', appointments: 1680, patients: 1250, doctors: 48, pharmacies: 13 },
-    { date: 'Mar 2024', appointments: 1780, patients: 1320, doctors: 52, pharmacies: 14 },
-    { date: 'Apr 2024', appointments: 1650, patients: 1280, doctors: 55, pharmacies: 15 },
-    { date: 'May 2024', appointments: 1820, patients: 1400, doctors: 58, pharmacies: 16 },
-    { date: 'Jun 2024', appointments: 1920, patients: 1480, doctors: 60, pharmacies: 17 },
-  ];
+  // استخدام البيانات من الـ API إذا كانت متوفرة، وإلا استخدام البيانات الوهمية
+  const chartData = selectedPeriod === 'day'
+    ? (trendsData?.data?.length > 0 ? trendsData.data : dailyData)
+    : selectedPeriod === 'week'
+    ? (trendsData?.data?.length > 0 ? trendsData.data : [])
+    : (trendsData?.data?.length > 0 ? trendsData.data : monthlyData);
 
-  const chartData = selectedPeriod === 'day' ? dailyData : monthlyData;
-
-  // Summary statistics
-  const totalStats = {
-    totalAppointments: 11370,
-    totalPatients: 7910,
-    totalDoctors: 60,
-    totalPharmacies: 17,
-    appointmentGrowth: '+12.5%',
-    patientGrowth: '+8.3%',
-    doctorGrowth: '+5.2%',
-    pharmacyGrowth: '+6.7%'
+  // استخدام البيانات من الـ API للإحصائيات
+  const totalStats = summaryStats || {
+    totalAppointments: 0,
+    totalPatients: 0,
+    totalDoctors: 0,
+    totalPharmacies: 0,
+    appointmentGrowth: '0%',
+    patientGrowth: '0%',
+    doctorGrowth: '0%',
+    pharmacyGrowth: '0%'
   };
- // Mock data for detailed reports - Arabic content
- const topDoctors = [
-  { name: 'د. أحمد محمود', specialty: 'القلب والأوعية الدموية', totalAppointments: 342, completedAppointments: 325, cancelledAppointments: 17, rating: 4.9 },
-  { name: 'د. فاطمة السيد', specialty: 'طب الأطفال', totalAppointments: 298, completedAppointments: 285, cancelledAppointments: 13, rating: 4.8 },
-  { name: 'د. محمد علي', specialty: 'الجراحة العامة', totalAppointments: 276, completedAppointments: 268, cancelledAppointments: 8, rating: 4.7 },
-  { name: 'د. نورا عبدالله', specialty: 'طب النساء والتوليد', totalAppointments: 264, completedAppointments: 252, cancelledAppointments: 12, rating: 4.9 },
-  { name: 'د. خالد حسن', specialty: 'العظام', totalAppointments: 251, completedAppointments: 243, cancelledAppointments: 8, rating: 4.6 },
-];
 
-const appointmentStats = {
-  totalBookings: 11370,
-  completedBookings: 10845,
-  cancelledBookings: 525,
-  scheduledBookings: 1430,
-  cancellationRate: '4.6%',
-  completionRate: '95.4%',
-  scheduledRate: '12.6%',
-  averageBookingsPerDay: 189,
-  averageBookingsPerMonth: 5685,
-  peakBookingHour: '10:00 - 11:00 صباحاً',
-};
+  // استخدام البيانات من الـ API للأطباء
+  const topDoctors = doctorsStats?.topDoctors || [];
 
-// Pie chart data for appointment status distribution
-const appointmentStatusData = [
-  { name: 'مكتملة', value: 10845, color: '#059669', percentage: '75.8%' },
-  { name: 'محجوزة', value: 1430, color: '#1e3561', percentage: '10.0%' },
-  { name: 'ملغاة', value: 525, color: '#f9555c', percentage: '3.7%' },
-];
+  const appointmentStats = doctorsStats?.appointmentStats || {
+    totalBookings: 0,
+    completedBookings: 0,
+    cancelledBookings: 0,
+    scheduledBookings: 0,
+    cancellationRate: '0%',
+    completionRate: '0%',
+    scheduledRate: '0%',
+    averageBookingsPerDay: 0,
+    averageBookingsPerMonth: 0,
+    peakBookingHour: ''
+  };
+
+  // استخدام البيانات من الـ API لتوزيع حالات المواعيد
+  const appointmentStatusData = doctorsStats?.appointmentStatusData || [];
 
   // Custom label for pie chart with white text
-  const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+  const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }: any) => {
     const RADIAN = Math.PI / 180;
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    // استخدم النسبة من البيانات بدلاً من حسابها بواسطة Recharts
+    const dataPercentage = appointmentStatusData[index]?.percentage || `${(percent * 100).toFixed(1)}%`;
 
     return (
       <text
@@ -137,7 +150,7 @@ const appointmentStatusData = [
         className="font-semibold"
         style={{ fontSize: '14px', fontWeight: 'bold' }}
       >
-        {`${(percent * 100).toFixed(1)}%`}
+        {dataPercentage}
       </text>
     );
   };
@@ -197,6 +210,7 @@ const appointmentStatusData = [
             className="w-32"
           >
             <SelectItem value="day">{t('dashboard.daily')}</SelectItem>
+            <SelectItem value="week">{t('dashboard.weekly')}</SelectItem>
             <SelectItem value="month">{t('dashboard.monthly')}</SelectItem>
           </RTLSelect>
           <Button onClick={handleExportReport} className="bg-primary hover:bg-primary/90">
@@ -375,10 +389,7 @@ const appointmentStatusData = [
             <h2 className="text-xl font-semibold text-primary">التقارير التفصيلية</h2>
             <p className="text-sm text-muted-foreground">إحصائيات شاملة عن الأطباء والمواعيد</p>
           </div>
-          <Button onClick={handleExportDetailedReport} className="bg-secondary hover:bg-secondary/90">
-            <Download className="w-4 h-4 ml-2" />
-            تصدير التقرير
-          </Button>
+       
         </div>
 
         {/* Top Doctors Table */}
@@ -406,7 +417,9 @@ const appointmentStatusData = [
                       <TableCell className="font-medium text-right hidden sm:table-cell">{doctor.name}</TableCell>
                       <TableCell className="text-right">
                         <div className="sm:hidden font-medium">{doctor.name}</div>
-                        <div className="text-sm text-muted-foreground">{doctor.specialty}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {doctor.specialty.length > 0 ? doctor.specialty.map(s => s.name).join(', ') : 'لا يوجد تخصص'}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 items-center justify-center">
@@ -451,7 +464,7 @@ const appointmentStatusData = [
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-primary text-right">
-                {(appointmentStats.completedBookings + appointmentStats.scheduledBookings + appointmentStats.cancelledBookings).toLocaleString('ar-EG')}
+                {(appointmentStats.completedBookings + appointmentStats.scheduledBookings + appointmentStats.cancelledBookings)}
               </div>
               <p className="text-xs text-muted-foreground text-right mt-1">
                 جميع المواعيد المسجلة
@@ -465,7 +478,7 @@ const appointmentStatusData = [
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600 text-right">
-                {appointmentStats.completedBookings.toLocaleString('ar-EG')}
+                {appointmentStats.completedBookings}
               </div>
               <p className="text-xs text-green-600 text-right mt-1">
                 نسبة الإكمال: {appointmentStats.completionRate}
@@ -479,7 +492,7 @@ const appointmentStatusData = [
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-primary text-right">
-                {appointmentStats.scheduledBookings.toLocaleString('ar-EG')}
+                {appointmentStats.scheduledBookings}
               </div>
               <p className="text-xs text-primary text-right mt-1">
                 قيد الانتظار
@@ -493,7 +506,7 @@ const appointmentStatusData = [
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600 text-right">
-                {appointmentStats.cancelledBookings.toLocaleString('ar-EG')}
+                {appointmentStats.cancelledBookings}
               </div>
               <p className="text-xs text-red-600 text-right mt-1">
                 نسبة الإلغاء: {appointmentStats.cancellationRate}
@@ -546,7 +559,7 @@ const appointmentStatusData = [
                                 <p className="font-semibold text-lg">{data.name}</p>
                               </div>
                               <p className="text-sm mb-1">
-                                العدد: <span className="font-bold">{data.value.toLocaleString('ar-EG')}</span> موعد
+                                العدد: <span className="font-bold">{data.value}</span> موعد
                               </p>
                               <p className="text-sm">
                                 النسبة: <span className="font-bold" style={{ color: data.color }}>{data.percentage}</span>
@@ -573,7 +586,7 @@ const appointmentStatusData = [
                       <div className="text-right">
                         <p className="font-semibold text-lg">{item.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {item.value.toLocaleString('ar-EG')} موعد
+                          {item.value} موعد
                         </p>
                       </div>
                     </div>
@@ -600,7 +613,7 @@ const appointmentStatusData = [
                   <div className="space-y-2 text-right">
                     <p className="text-sm">
                       • إجمالي المواعيد: <span className="font-bold text-primary">
-                        {(appointmentStats.completedBookings + appointmentStats.scheduledBookings + appointmentStats.cancelledBookings).toLocaleString('ar-EG')}
+                        {(appointmentStats.completedBookings + appointmentStats.scheduledBookings + appointmentStats.cancelledBookings)}
                       </span>
                     </p>
                     <p className="text-sm">

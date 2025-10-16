@@ -198,6 +198,7 @@
     "exportReport": "Export Report",
     "period": "Period",
     "daily": "Daily",
+    "weekly": "Weekly",
     "monthly": "Monthly",
     "totalAppointments": "Total Appointments",
     "totalPatients": "Total Patients",
