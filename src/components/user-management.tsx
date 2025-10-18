@@ -58,7 +58,7 @@ interface User {
   accountType: UserType;
   accountStatus: AccountStatus;
   birthdate?: string;
-  nationalId?: string;
+  national_id?: string;
   governorate_id?: number;
   governorate?: string;
   city?: string;
@@ -101,7 +101,7 @@ export function UserManagement() {
     email: string;
     password: string;
     birthdate: string;
-    nationalId: string;
+    national_id: string;
     governorate: string;
     city: string;
     street: string;
@@ -199,7 +199,7 @@ export function UserManagement() {
       email: user.email,
       password: "",
       birthdate: user.birthdate || "",
-      nationalId: user.nationalId || "",
+      national_id: user.national_id || "",
       governorate: (() => {
         // If governorate_id is available, use it
         if (user.governorate_id) {
@@ -1283,7 +1283,7 @@ price: parseFloat(formData.price) || 0,
                         </TableCell>
                         <TableCell className={isRTL ? 'text-right' : 'text-left'}>
                           {selectedAccountTypeFilter === 'patient' ? (
-                            user.nationalId || t('users.noNationalId')
+                            user.national_id || t('users.noNationalId')
                           ) : selectedAccountTypeFilter === 'pharmacist' ? (
                             user.pharmacy_name || t('users.noPharmacy')
                           ) : (
