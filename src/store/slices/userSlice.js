@@ -57,6 +57,31 @@ export const toggleUserStatusAPI = createAsyncThunk(
     }
   }
 );
+
+// Async thunk لحذف مستخدم
+export const deleteUserAPI = createAsyncThunk(
+  'user/deleteUser',
+  async (userId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.delete(`/users/${userId}`);
+
+      if (response.data.success) {
+        return {
+          success: true,
+          message: response.data.message,
+          userId: userId
+        };
+      } else {
+        return rejectWithValue(response.data.message || 'حدث خطأ أثناء حذف المستخدم');
+      }
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'حدث خطأ في الشبكة أثناء حذف المستخدم'
+      );
+    }
+  }
+);
+
 const userSlice = createSlice({
   name: 'user',
   initialState: {
@@ -109,7 +134,16 @@ const userSlice = createSlice({
         state.success = true;
         state.error = null;
       })
-      .addCase(toggleUserStatusAPI.rejected, (state, action) => {
+      .addCase(deleteUserAPI.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteUserAPI.fulfilled, (state, action) => {
+        state.loading = false;
+        state.success = true;
+        state.error = null;
+      })
+      .addCase(deleteUserAPI.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
         state.success = false;

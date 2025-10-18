@@ -40,8 +40,9 @@ import CustomDatePicker from './ui/CustomDatePicker';
 import { toast } from 'react-toastify';
 import { fetchGovernorates } from "../store/slices/governoratesSlice";
 import { fetchSpecialties } from "../store/slices/specialtiesSlice";
-import { registerUser, toggleUserStatusAPI } from "../store/slices/userSlice";
+import { registerUser, toggleUserStatusAPI, deleteUserAPI } from "../store/slices/userSlice";
 import { fetchUsers } from "../store/slices/usersDisplaySlice";
+import { updateUser } from "../store/slices/userEditSlice";
 import DatePicker from "react-datepicker";
 import "./../styles/responsive-utils.css";
 type UserType = "doctor" | "patient" | "pharmacist";
@@ -62,11 +63,11 @@ interface User {
   governorate?: string;
   city?: string;
   street?: string;
-  specialties?: number[];
+  specialties?: { id: number; name: string }[];
   bio?: string;
   profilePicture?: string;
   pharmacyName?: string;
-  consultationPrice?: string;
+  price?: string;
 }
 
 const genders = ["male", "female"];
@@ -108,7 +109,7 @@ export function UserManagement() {
     bio: string;
     profilePicture: string;
     pharmacyName: string;
-    consultationPrice: string;
+    price: string;
   }>({
     fullName: "",
     username: "",
@@ -125,7 +126,7 @@ export function UserManagement() {
     bio: "",
     profilePicture: "",
     pharmacyName: "",
-    consultationPrice: "",
+    price: "",
   });
 
   // جلب البيانات من API عند تحميل الكومبوننت وعند تغيير الفلتر
@@ -174,7 +175,7 @@ export function UserManagement() {
       bio: "",
       profilePicture: "",
       pharmacyName: "",
-      consultationPrice: "",
+      price: "",
     });
     setSelectedImage(null); // إعادة تعيين الصورة المحددة
     setShowPassword(false); // إعادة تعيين حالة إظهار كلمة المرور
@@ -199,14 +200,29 @@ export function UserManagement() {
       password: "",
       birthdate: user.birthdate || "",
       nationalId: user.nationalId || "",
-      governorate: user.governorate_id?.toString() || user.governorate || "",
+      governorate: (() => {
+        // If governorate_id is available, use it
+        if (user.governorate_id) {
+          return user.governorate_id.toString();
+        }
+        // Otherwise, find governorate by name
+        if (user.governorate && governorates.length > 0) {
+          const foundGovernorate = governorates.find(g =>
+            g.name === user.governorate ||
+            g.nameAr === user.governorate ||
+            g.nameEn === user.governorate
+          );
+          return foundGovernorate ? foundGovernorate.id.toString() : "";
+        }
+        return "";
+      })(),
       city: user.city || "",
       street: user.street || "",
-      specialties: user.specialties || [],
+      specialties: user.specialties?.map(s => s.id) || [],
       bio: user.bio || "",
       profilePicture: user.profilePicture || "",
       pharmacyName: user.pharmacyName || "",
-      consultationPrice: user.consultationPrice || "",
+      price: user.price || "",
     });
     setIsAddModalOpen(true);
   };
@@ -235,7 +251,7 @@ export function UserManagement() {
           specialties_id: formData.specialties,
           bio: formData.bio,
           profilePicture: selectedImage, // استخدام الـ File بدلاً من URL
-          price: parseFloat(formData.consultationPrice) || 0,
+price: parseFloat(formData.price) || 0,
         }),
         ...(selectedUserType === "pharmacist" && {
           pharmacyName: formData.pharmacyName,
@@ -271,7 +287,7 @@ export function UserManagement() {
           formDataToSend.append('specialties_id[]', specialtyId.toString());
         });
         formDataToSend.append('bio', userData.bio || '');
-        formDataToSend.append('price', (userData.price || 0).toString());
+        formDataToSend.append('price', userData.price?.toString() || '0');
 
         if (selectedImage) {
           formDataToSend.append('profilePicture', selectedImage);
@@ -286,8 +302,18 @@ export function UserManagement() {
         }
       }
 
-      // إرسال البيانات إلى API
-      const result = await (dispatch as any)(registerUser(formDataToSend));
+      // إرسال البيانات إلى API - استخدم API مختلف حسب نوع العملية
+      let result;
+      if (editingUser) {
+        // للتعديل، أرسل البيانات كـ object
+        result = await (dispatch as any)(updateUser({
+          userId: editingUser.id,
+          userData: userData
+        }));
+      } else {
+        // للإنشاء، أرسل البيانات كـ FormData
+        result = await (dispatch as any)(registerUser(formDataToSend));
+      }
 
 
       // 2. تطبيق الشرط: إذا كان كود الحالة 200 (نجاح)
@@ -314,6 +340,8 @@ export function UserManagement() {
           onClose: () => {
             setIsAddModalOpen(false);
             resetForm();
+            // إعادة جلب بيانات المستخدمين لتحديث الجدول بعد التعديل الناجح
+            (dispatch as any)(fetchUsers(selectedAccountTypeFilter ?? 'doctor'));
           }
         });
 
@@ -356,24 +384,46 @@ export function UserManagement() {
   const deleteUser = async (id: string) => {
     try {
       // استدعاء API حذف المستخدم
-      // سيتم إضافة API call هنا لاحقاً
-      console.log('حذف المستخدم:', id);
+      const result = await (dispatch as any)(deleteUserAPI(id));
 
-      // رسالة نجاح مؤقتة لحين إضافة API الحقيقي
-      toast.success("تم حذف المستخدم بنجاح", {
-        position: "top-center",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: "light",
-      });
+         if (result.payload?.success === true) {
+        // نجح الحذف - رسالة نجاح من الـ API response
+        const message = result.payload?.message || "تم حذف المستخدم بنجاح";
 
-      // إعادة جلب بيانات المستخدمين لتحديث القائمة
-      (dispatch as any)(fetchUsers(selectedAccountTypeFilter ?? 'doctor'));
+        const CustomToastContent = () => (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <CheckCircle style={{ color: 'green', marginRight: '10px', fontSize: '24px' }} />
+            <span>{message}</span>
+          </div>
+        );
+
+        toast(<CustomToastContent />, {
+          position: "top-center",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+        });
+
+        // إعادة جلب بيانات المستخدمين لتحديث القائمة
+        (dispatch as any)(fetchUsers(selectedAccountTypeFilter ?? 'doctor'));
+      } else {
+        // فشل الحذف - رسالة خطأ من الـ API response
+        const errorMessage = result.payload || "حدث خطأ أثناء حذف المستخدم";
+        toast.error(errorMessage, {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+        });
+      }
     } catch (error) {
-      toast.error("حدث خطأ أثناء حذف المستخدم", {
+      toast.error("حدث خطأ غير متوقع أثناء حذف المستخدم", {
         position: "top-center",
         autoClose: 3000,
         hideProgressBar: false,
@@ -891,10 +941,16 @@ export function UserManagement() {
                   <Label>{t('users.consultationPrice')}</Label>
                   <Input
                     type="number"
-                    value={formData.consultationPrice}
-                    onChange={(e) =>
-                      setFormData({ ...formData, consultationPrice: e.target.value })
-                    }
+                    step="0.01"
+                    min="0"
+                    value={formData.price}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Allow empty value or valid decimal numbers
+                      if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                        setFormData({ ...formData, price: value });
+                      }
+                    }}
                     placeholder={t('users.consultationPrice')}
                     className={isMobile ? 'min-h-[44px]' : ''}
                     style={isMobile ? { fontSize: '16px' } : {}}

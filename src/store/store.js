@@ -6,10 +6,12 @@ import authReducer from './slices/authSlice';
 import specialtiesReducer from './slices/specialtiesSlice';
 import addSpecialtyReducer from './slices/addSpecialtySlice';
 import deleteSpecialtyReducer from './slices/deleteSpecialtySlice';
+import bannerReducer from './slices/bannerSlice';
 import governoratesReducer from './slices/governoratesSlice.js';
 import usersDisplayReducer from './slices/usersDisplaySlice';
 import ratingReducer from './slices/ratingSlice';
 import dashboardReducer from './slices/dashboardSlice';
+import userEditReducer from './slices/userEditSlice';
 
 const store = configureStore({
     reducer: {
@@ -20,7 +22,9 @@ const store = configureStore({
         specialties: specialtiesReducer,
         addSpecialty: addSpecialtyReducer,
         deleteSpecialty: deleteSpecialtyReducer,
+        banners: bannerReducer,
         usersDisplay: usersDisplayReducer,
+        userEdit: userEditReducer,
         governorates: governoratesReducer,
         ratings: ratingReducer,
         dashboard: dashboardReducer,

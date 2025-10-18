@@ -6,18 +6,21 @@ export const updateUser = createAsyncThunk(
   'userEdit/updateUser',
   async ({ userId, userData }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.put(`/users/${userId}`, userData);
+      const response = await axiosInstance.put(`/users/${userId}?_method=PUT`, userData);
 
       if (response.data.success) {
         return {
+             success: true,
           user: response.data.data,
           message: response.data.message
         };
       } else {
+        
         return rejectWithValue(response.data.message || 'حدث خطأ أثناء تعديل المستخدم');
       }
     } catch (error) {
       return rejectWithValue(
+        
         error.response?.data?.message || 'حدث خطأ في الشبكة أثناء تعديل المستخدم'
       );
     }

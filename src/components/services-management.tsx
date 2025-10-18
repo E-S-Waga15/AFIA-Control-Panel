@@ -18,7 +18,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchSpecialties } from '../store/slices/specialtiesSlice';
 import { addSpecialty, updateSpecialty, clearAddSpecialtyState } from '../store/slices/addSpecialtySlice';
 import { deleteSpecialty, clearDeleteSpecialtyState } from '../store/slices/deleteSpecialtySlice';
-import type { RootState, AppDispatch } from '../store/store';
+import { fetchBanners, addBanner, updateBanner, deleteBanner, clearBannerState } from '../store/slices/bannerSlice';
 
 interface Specialty {
   id: string;
@@ -27,6 +27,13 @@ interface Specialty {
   icon: string;
   color: string;
   iconUrl?: string;
+}
+
+interface Banner {
+  id: string;
+  index: number;
+  image: string;
+  description: string;
 }
 
 interface Service {
@@ -100,21 +107,25 @@ const getColorClass = (color: string) => {
 
 export function ServicesManagement() {
   const { t, isRTL } = useLanguage();
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useDispatch();
   const isMobile = window.innerWidth < 768;
   // ✅ جلب الاختصاصات من Redux
-  const { specialties, loading, error } = useSelector((state: RootState) => state.specialties);
-  const { loading: addLoading, error: addError, success, message } = useSelector((state: RootState) => state.addSpecialty);
-  const { loading: deleteLoading, error: deleteError, success: deleteSuccess, message: deleteMessage } = useSelector((state: RootState) => state.deleteSpecialty);
+  const { specialties, loading, error } = useSelector((state: any) => state.specialties);
+  const { loading: addLoading, error: addError, success, message } = useSelector((state: any) => state.addSpecialty);
+  const { loading: deleteLoading, error: deleteError, success: deleteSuccess, message: deleteMessage } = useSelector((state: any) => state.deleteSpecialty);
+  const { banners, loading: bannerLoading, error: bannerError, success: bannerSuccess, message: bannerMessage } = useSelector((state: any) => state.banners);
 
   const [services, setServices] = useState<Service[]>(mockServices);
 
   // State للنماذج
   const [isSpecialtyModalOpen, setIsSpecialtyModalOpen] = useState(false);
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
+  const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [editingSpecialty, setEditingSpecialty] = useState<Specialty | null>(null);
   const [editingService, setEditingService] = useState<Service | null>(null);
+  const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedBannerImage, setSelectedBannerImage] = useState<File | null>(null);
 
   const [specialtyForm, setSpecialtyForm] = useState({
     name: '',
@@ -130,9 +141,18 @@ export function ServicesManagement() {
     category: ''
   });
 
+  const [bannerForm, setBannerForm] = useState({
+    description: ''
+  });
+
   // ✅ تحميل الاختصاصات من API عند أول تحميل
   useEffect(() => {
     dispatch(fetchSpecialties());
+  }, [dispatch]);
+
+  // ✅ تحميل البانرات من API عند أول تحميل
+  useEffect(() => {
+    dispatch(fetchBanners());
   }, [dispatch]);
 
   // ✅ مراقبة حالة إضافة/تعديل الاختصاص
@@ -194,6 +214,36 @@ export function ServicesManagement() {
       dispatch(clearDeleteSpecialtyState());
     }
   }, [deleteSuccess, deleteMessage, dispatch]);
+
+  // ✅ مراقبة حالة عمليات الإعلانات
+  useEffect(() => {
+    if (bannerSuccess && bannerMessage) {
+      // مكون الرسالة المخصص
+      const CustomToastContent = () => (
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <FaCheckCircle style={{ color: 'green', marginRight: '10px', fontSize: '24px' }} />
+          <span>{bannerMessage}</span>
+        </div>
+      );
+
+      // عرض التوست
+      toast(<CustomToastContent />, {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+        onClose: () => {
+
+        }
+      });
+
+      // تنظيف الحالة بعد عرض الرسالة
+      dispatch(clearBannerState());
+    }
+  }, [bannerSuccess, bannerMessage, dispatch]);
 
   const resetSpecialtyForm = () => {
     setSpecialtyForm({
@@ -350,6 +400,102 @@ export function ServicesManagement() {
     setServices(services.filter(s => s.id !== id));
   };
 
+  const resetBannerForm = () => {
+    setBannerForm({
+      description: ''
+    });
+    setSelectedBannerImage(null);
+  };
+
+  const openAddBannerModal = () => {
+    resetBannerForm();
+    setEditingBanner(null);
+    setIsBannerModalOpen(true);
+  };
+
+  const openEditBannerModal = (banner) => {
+    setBannerForm({
+      description: banner.description
+    });
+    setEditingBanner(banner);
+    setIsBannerModalOpen(true);
+  };
+
+  const handleBannerSubmit = async () => {
+    if (!bannerForm.description.trim()) {
+      toast.error('يرجى إدخال وصف البانر', {
+        position: "top-center",
+      });
+      return;
+    }
+
+    try {
+      const bannerData = {
+        description: bannerForm.description,
+        image: selectedBannerImage || undefined
+      };
+
+      if (editingBanner) {
+        await dispatch(updateBanner({
+          id: editingBanner.id,
+          bannerData
+        }));
+      } else {
+        await dispatch(addBanner(bannerData));
+      }
+
+      setIsBannerModalOpen(false);
+      resetBannerForm();
+    } catch (error) {
+      console.error('Error submitting banner:', error);
+    }
+  };
+
+  const showDeleteBannerConfirmation = (id: string) => {
+    toast(
+      ({ closeToast }) => (
+        <div style={{ textAlign: "center" }}>
+          <h4 style={{ margin: "0 0 8px 0" }}>{t('banners.deleteConfirmation')}</h4>
+          <p style={{ fontSize: "14px", marginBottom: "12px" }}>
+            {t('banners.deleteConfirmation')}
+          </p>
+          <div
+            style={{ display: "flex", justifyContent: "center", gap: "10px" }}
+          >
+            <button
+              className="toast-confirm"
+              onClick={() => {
+                handleDeleteBanner(id);
+                closeToast();
+              }}
+            >
+              {t('common.confirm')}
+            </button>
+            <button className="toast-cancel" onClick={closeToast}>
+              {t('common.close')}
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        position: "top-center",
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+        hideProgressBar: true,
+        className: "custom-toast",
+      }
+    );
+  };
+
+  const handleDeleteBanner = async (id: string) => {
+    try {
+      await dispatch(deleteBanner(id));
+    } catch (error) {
+      console.error('Error deleting banner:', error);
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Specialties Section */}
@@ -433,154 +579,172 @@ export function ServicesManagement() {
           </RTLDialog>
         </div>
 
-        {/* Loading specialties */}
-        {loading && <p>{t('specialties.loadingSpecialties')}...</p>}
-        {error && <p className="text-red-500">{typeof error === 'object' ? error.message : error}</p>}
-        {addError && <p className="text-red-500">{addError}</p>}
-        {deleteError && <p className="text-red-500">{deleteError}</p>}
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {specialties.map((specialty) => {
-            const IconComponent = getIconComponent(specialty.icon);
-            return (
-              <Card key={specialty.id} className={`${getColorClass(specialty.color)} border-2`}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {specialty.iconUrl !== 'null' ? <img src={specialty.iconUrl} alt={specialty.name} className="w-8 h-8" /> : <IconComponent className="w-8 h-8" />}
-                      <CardTitle>{specialty.name}</CardTitle>
+          {loading ? (
+            <div className="col-span-full text-center py-8">
+              <p className="text-lg text-gray-600">{t('specialties.loadingSpecialties')}...</p>
+            </div>
+          ) : error ? (
+            <div className="col-span-full text-center py-8">
+              <p className="text-red-500 text-lg">{typeof error === 'object' ? error.message : error}</p>
+            </div>
+          ) : addError ? (
+            <div className="col-span-full text-center py-8">
+              <p className="text-red-500 text-lg">{addError}</p>
+            </div>
+          ) : deleteError ? (
+            <div className="col-span-full text-center py-8">
+              <p className="text-red-500 text-lg">{deleteError}</p>
+            </div>
+          ) : specialties.length === 0 ? (
+            <div className="col-span-full text-center py-8">
+              <p className="text-gray-500 text-lg">لا توجد تخصصات متاحة</p>
+            </div>
+          ) : (
+            specialties.map((specialty) => {
+              const IconComponent = getIconComponent(specialty.icon);
+              return (
+                <Card key={specialty.id} className={`${getColorClass(specialty.color)} border-2`}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {specialty.iconUrl !== 'null' ? <img src={specialty.iconUrl} alt={specialty.name} className="w-8 h-8" /> : <IconComponent className="w-8 h-8" />}
+                        <CardTitle>{specialty.name}</CardTitle>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditSpecialtyModal(specialty)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => showDeleteConfirmation(specialty.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditSpecialtyModal(specialty)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => showDeleteConfirmation(specialty.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm">{specialty.description || ""}</p>
-                </CardContent>
-              </Card>
-            );
-          })}
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm">{specialty.description || ""}</p>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
         </div>
       </div>
 
-      {/* Services Section */}
+      {/* Banners Section */}
       <div>
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold">{t('services.title')}</h2>
+          <h2 className="text-2xl font-semibold">الإعلانات</h2>
           <RTLDialog
-            open={isServiceModalOpen}
-            onOpenChange={setIsServiceModalOpen}
-            title={`${editingService ? t('common.edit') : t('common.add')} ${t('services.serviceName')}`}
+            open={isBannerModalOpen}
+            onOpenChange={setIsBannerModalOpen}
+            title={`${editingBanner ? 'تعديل الإعلان' : 'إضافة إعلان جديد'}`}
             trigger={
-              <Button onClick={openAddServiceModal} className="flex items-center gap-2">
+              <Button onClick={openAddBannerModal} className="flex items-center gap-2">
                 <Plus className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-                {t('services.addService')}
+                إضافة إعلان
               </Button>
             }
+            maxWidth={isMobile ? "w-300px" : "max-w-4xl"}
           >
             <div className="space-y-4">
               <div>
-                <Label>{t('services.serviceName')}</Label>
-                <Input
-                  value={serviceForm.name}
-                  onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })}
-                  placeholder={t('services.serviceName')}
-                />
-              </div>
-
-              <div>
-                <Label>Description</Label>
+                <Label>وصف الإعلان</Label>
                 <Textarea
-                  value={serviceForm.description}
-                  onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })}
-                  placeholder="Detailed description of the service"
+                  value={bannerForm.description}
+                  onChange={(e) => setBannerForm({ ...bannerForm, description: e.target.value })}
+                  placeholder="أدخل وصف الإعلان"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Price ($)</Label>
-                  <Input
-                    type="number"
-                    value={serviceForm.price}
-                    onChange={(e) => setServiceForm({ ...serviceForm, price: e.target.value })}
-                    placeholder="150"
-                  />
-                </div>
-
-                <div>
-                  <Label>Category</Label>
-                  <Input
-                    value={serviceForm.category}
-                    onChange={(e) => setServiceForm({ ...serviceForm, category: e.target.value })}
-                    placeholder="e.g., General, Cardiology"
-                  />
-                </div>
+              <div className="modal-image-upload-section">
+                <Label className="modal-image-upload-label">صورة الإعلان</Label>
+                <ImageUpload
+                  onImageSelect={(file) => {
+                    setSelectedBannerImage(file);
+                  }}
+                  buttonText="رفع صورة الإعلان"
+                />
               </div>
 
               <div className="flex justify-end gap-4">
-                <Button variant="outline" onClick={() => setIsServiceModalOpen(false)}>
-                  {t('common.cancel')}
+                <Button variant="outline" onClick={() => setIsBannerModalOpen(false)}>
+                  إلغاء
                 </Button>
-                <Button onClick={handleServiceSubmit}>
-                  {editingService ? t('common.edit') : t('common.add')} {t('services.serviceName')}
+                <Button onClick={handleBannerSubmit} disabled={bannerLoading}>
+                  {bannerLoading ? (<>
+                    <Loader className="w-4 h-4 animate-spin mr-2" />
+                    جاري الحفظ...
+                  </>) : (editingBanner ? 'تعديل الإعلان' : 'إضافة الإعلان')}
                 </Button>
               </div>
             </div>
           </RTLDialog>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {services.map((service) => (
-            <Card key={service.id}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>{service.name}</CardTitle>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openEditServiceModal(service)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteService(service.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {bannerLoading ? (
+            <div className="col-span-full text-center py-8">
+              <p className="text-lg text-gray-600">جاري تحميل الإعلانات...</p>
+            </div>
+          ) : bannerError ? (
+            <div className="col-span-full text-center py-8">
+              <p className="text-red-500 text-lg">{bannerError}</p>
+            </div>
+          ) : banners.length === 0 ? (
+            <div className="col-span-full text-center py-8">
+              <p className="text-gray-500 text-lg">لا توجد إعلانات متاحة</p>
+            </div>
+          ) : (
+            banners.map((banner) => (
+              <Card key={banner.id} className="overflow-hidden">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">إعلان #{banner.index + 1}</CardTitle>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEditBannerModal(banner)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => showDeleteBannerConfirmation(banner.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">{service.description}</p>
-                <div className="flex items-center justify-between">
-                  <Badge variant="outline">{service.category}</Badge>
-                  <div className="text-right">
-                    <div className="text-lg font-semibold">${service.price}</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {banner.image && (
+                    <div className="aspect-video w-full">
+                      <img
+                        src={banner.image}
+                        alt={banner.description}
+                        className="w-full h-full object-cover rounded-md"
+                      />
+                    </div>
+                  )}
+                  <p className="text-sm text-muted-foreground">{banner.description}</p>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       </div>
+
     </div>
   );
 }
