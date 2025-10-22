@@ -1432,6 +1432,9 @@
   .bg-green-100 {
     background-color: var(--color-green-100);
   }
+  .bg-green-200 {
+    background-color: var(--color-green-200);
+  }
 
   .bg-green-600 {
     background-color: var(--color-green-600);

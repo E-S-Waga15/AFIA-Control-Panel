@@ -20,7 +20,7 @@ import {
   setCurrentPage
 } from '../store/slices/appointmentsSlice';
 
-type AppointmentStatus = 'upcoming' | 'completed' | 'cancelled';
+type AppointmentStatus = 'upcoming' | 'completed' | 'canceled';
 
 interface Appointment {
   doctor_name: string;
@@ -126,16 +126,16 @@ export function AppointmentsManagement() {
     setIsDetailsOpen(true);
   };
 
-  const getStatusBadgeVariant = (status: AppointmentStatus) => {
+  const getStatusBadgeProps = (status: AppointmentStatus) => {
     switch (status) {
       case 'upcoming':
-        return 'default';
+        return { variant: 'default' as const, className: '' };
       case 'completed':
-        return 'secondary';
-      case 'cancelled':
-        return 'destructive';
+        return { variant: 'secondary' as const, className: 'bg-green-600 text-white hover:bg-green-700' };
+      case 'canceled':
+        return { variant: 'destructive' as const, className: '' };
       default:
-        return 'outline';
+        return { variant: 'outline' as const, className: '' };
     }
   };
 
@@ -161,7 +161,7 @@ export function AppointmentsManagement() {
               <CardTitle className="text-lg font-semibold text-primary">
                 {appointment.patient_name}
               </CardTitle>
-              <Badge variant={getStatusBadgeVariant(appointment.status)}>
+              <Badge variant={getStatusBadgeProps(appointment.status).variant} className={getStatusBadgeProps(appointment.status).className}>
                 {appointment.status === 'upcoming' ? t('appointments.scheduled') :
                  appointment.status === 'completed' ? t('appointments.completed') :
                  t('appointments.cancelled')}
@@ -231,7 +231,7 @@ export function AppointmentsManagement() {
                 <SelectItem value="all">{t('appointments.allStatuses')}</SelectItem>
                 <SelectItem value="upcoming">{t('appointments.scheduled')}</SelectItem>
                 <SelectItem value="completed">{t('appointments.completed')}</SelectItem>
-                <SelectItem value="cancelled">{t('appointments.cancelled')}</SelectItem>
+                <SelectItem value="canceled">{t('appointments.cancelled')}</SelectItem>
               </RTLSelect>
             </div>
 
@@ -287,7 +287,7 @@ export function AppointmentsManagement() {
                           </div>
                         </TableCell>
                         <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                          <Badge variant={getStatusBadgeVariant(appointment.status)}>
+                          <Badge variant={getStatusBadgeProps(appointment.status).variant} className={getStatusBadgeProps(appointment.status).className}>
                             {appointment.status === 'upcoming' ? t('appointments.scheduled') :
                              appointment.status === 'completed' ? t('appointments.completed') :
                              t('appointments.cancelled')}
@@ -382,7 +382,7 @@ export function AppointmentsManagement() {
               <div>
                 <Label>Status</Label>
                 <div className="p-2">
-                  <Badge variant={getStatusBadgeVariant(selectedAppointment.status)}>
+                  <Badge variant={getStatusBadgeProps(selectedAppointment.status).variant} className={getStatusBadgeProps(selectedAppointment.status).className}>
                     {selectedAppointment.status}
                   </Badge>
                 </div>

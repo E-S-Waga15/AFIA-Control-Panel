@@ -7,6 +7,8 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
 import { Plus, Edit, Trash2, Upload, Heart, Brain, Eye, Stethoscope, Baby, Bone, Loader } from 'lucide-react';
+import { Skeleton } from './ui/skeleton';
+
 import { useLanguage } from '../contexts/LanguageContext';
 import { ImageUpload } from './ui/image-upload';
 import { RTLDialog } from './ui/rtl-dialog';
@@ -104,6 +106,51 @@ const getColorClass = (color: string) => {
   };
   return colorClasses[color as keyof typeof colorClasses] || 'bg-gray-100 text-gray-800 border-gray-200';
 };
+
+// Loading Skeletons
+const SpecialtiesGridSkeleton = () => (
+  <div className="grid  grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {[...Array(6)].map((_, index) => (
+      <Card key={index} className="w-full border-2">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Skeleton className="w-8 h-8 rounded" />
+              <Skeleton className="h-5 w-24" />
+            </div>
+          
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-4 w-full mb-2" />
+          <Skeleton className="h-4 w-3/4" />
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+);
+
+const BannersGridSkeleton = () => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {[...Array(3)].map((_, index) => (
+      <Card key={index} className="w-full overflow-hidden">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-6 w-20" />
+            <div className="flex gap-2">
+              <Skeleton className="w-8 h-8" />
+              <Skeleton className="w-8 h-8" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-2/3" />
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+);
 
 export function ServicesManagement() {
   const { t, isRTL } = useLanguage();
@@ -581,9 +628,7 @@ export function ServicesManagement() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
-            <div className="col-span-full text-center py-8">
-              <p className="text-lg text-gray-600">{t('specialties.loadingSpecialties')}...</p>
-            </div>
+            <SpecialtiesGridSkeleton />
           ) : error ? (
             <div className="col-span-full text-center py-8">
               <p className="text-red-500 text-lg">{typeof error === 'object' ? error.message : error}</p>
@@ -692,9 +737,7 @@ export function ServicesManagement() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {bannerLoading ? (
-            <div className="col-span-full text-center py-8">
-              <p className="text-lg text-gray-600">جاري تحميل الإعلانات...</p>
-            </div>
+            <BannersGridSkeleton />
           ) : bannerError ? (
             <div className="col-span-full text-center py-8">
               <p className="text-red-500 text-lg">{bannerError}</p>

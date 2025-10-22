@@ -442,7 +442,7 @@ price: parseFloat(formData.price) || 0,
           <h4 style={{ margin: "0 0 8px 0" }}>
           
           </h4>
-          <p style={{ fontSize: "14px", marginBottom: "12px" }}>
+          <p style={{ fontSize: "14px", marginBottom: "12px", marginRight:"15px", marginLeft:"15px"}}>
             هل أنت متأكد من أنك تريد حذف هذا المستخدم؟ لا يمكن التراجع عن هذا الإجراء.
           </p>
           <div
@@ -538,7 +538,7 @@ price: parseFloat(formData.price) || 0,
           <h4 style={{ margin: "0 0 8px 0" }}>
          
           </h4>
-          <p style={{ fontSize: "14px", marginBottom: "12px" }}>
+          <p style={{ fontSize: "14px", marginBottom: "12px", marginRight:"35px"}}>
             {currentStatus === "active"
               ? "هل أنت متأكد من أنك تريد تعطيل هذا المستخدم؟"
               : "هل أنت متأكد من أنك تريد تفعيل هذا المستخدم؟"}

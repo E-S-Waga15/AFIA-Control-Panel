@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link, useNavigate } from 'react-router-dom';
 
-import { Provider } from 'react-redux';
+import { Provider, useSelector } from 'react-redux';
 import store from './store/store';
 
 import { Login } from './components/login';
 import { DashboardHome } from './components/dashboard-home';
 import { UserManagement } from './components/user-management';
+import { AdminManagement } from './components/admin-management';
 import { AppointmentsManagement } from './components/appointments-management';
 import { UserInformation } from './components/user-information';
 import { ServicesManagement } from './components/services-management';
@@ -22,12 +23,14 @@ import { Button } from './components/ui/button';
 import { Home, Users, Calendar, Pill, Settings, Star, LogOut } from 'lucide-react';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { LanguageToggle } from './components/LanguageToggle';
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
+import { CheckCircle } from 'lucide-react';
 
 function DashboardLayout({ onLogout, currentUser }) {
   const { t, isRTL } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
+  const accountType = useSelector((state: any) => state.auth.account_type);
 
   // إغلاق الـ sidebar تلقائياً عند الانتقال إلى صفحة جديدة في الموبايل فقط
   useEffect(() => {
@@ -51,6 +54,7 @@ function DashboardLayout({ onLogout, currentUser }) {
     const path = location.pathname;
     if (path === '/' ) return 'home';
     if (path === '/users') return 'users';
+    if (path === '/admins') return 'admins';
     if (path === '/appointments') return 'appointments';
     if (path === '/services') return 'services';
     if (path === '/ratings') return 'ratings';
@@ -62,15 +66,19 @@ function DashboardLayout({ onLogout, currentUser }) {
   const sidebarItems = [
     { path: '/', label: t('sidebar.dashboard'), icon: Home, id: 'home' },
     { path: '/users', label: t('sidebar.userManagement'), icon: Users, id: 'users' },
+    { path: '/admins', label: t('sidebar.adminManagement'), icon: Users, id: 'admins' },
     { path: '/appointments', label: t('sidebar.appointments'), icon: Calendar, id: 'appointments' },
     { path: '/services', label: t('sidebar.servicesSpecialties'), icon: Settings, id: 'services' },
     { path: '/ratings', label: t('sidebar.doctorRatings'), icon: Star, id: 'ratings' },
   ];
 
+  const filteredSidebarItems = sidebarItems.filter(item => item.path !== '/admins' || accountType === 'owner');
+
   const getPageTitle = () => {
     switch (currentPage) {
       case 'home': return t('app.dashboardOverview');
       case 'users': return t('sections.userManagement');
+      case 'admins': return t('sections.adminManagement');
       case 'appointments': return t('sections.appointmentsManagement');
       case 'services': return t('sections.servicesSpecialties');
       case 'ratings': return t('sections.doctorRatings');
@@ -96,7 +104,7 @@ function DashboardLayout({ onLogout, currentUser }) {
               <SidebarGroupLabel>{t('common.navigation')}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {sidebarItems.map((item) => (
+                  {filteredSidebarItems.map((item) => (
                     <SidebarMenuItem key={item.path}>
                       <SidebarMenuButton asChild isActive={currentPage === item.id}>
                         <Link to={item.path}>
@@ -138,6 +146,7 @@ function DashboardLayout({ onLogout, currentUser }) {
             <Routes>
               <Route path="/" element={<DashboardHome />} />
               <Route path="/users" element={<UserManagement />} />
+              <Route path="/admins" element={accountType === 'owner' ? <AdminManagement /> : <Navigate to="/" />} />
               <Route path="/appointments" element={<AppointmentsManagement />} />
               <Route path="/services" element={<ServicesManagement />} />
               <Route path="/ratings" element={<DoctorsRatings />} />
@@ -155,16 +164,16 @@ function DashboardLayout({ onLogout, currentUser }) {
 function AppRoutes() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const accountType = useSelector((state: any) => state.auth.account_type);
+  const token = useSelector((state: any) => state.auth.token);
 
   // تحقق عند التحميل إذا كان فيه توكن
   useEffect(() => {
-    const token = localStorage.getItem('token');
     if (token) {
       setIsLoggedIn(true);
-      // ممكن تجيب بيانات المستخدم من التوكن أو API
-      setCurrentUser({ username: 'user', role: 'admin' });
+      setCurrentUser({ username: 'user', role: accountType });
     }
-  }, []);
+  }, [token, accountType]);
 
   const handleLogin = (username, role) => {
     setCurrentUser({ username, role });
@@ -173,8 +182,46 @@ function AppRoutes() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('account_type');
     setCurrentUser(null);
     setIsLoggedIn(false);
+    window.location.reload();
+  };
+
+   const confirmLogout = () => {
+    toast(
+      ({ closeToast }) => (
+        <div style={{ textAlign: "center" }}>
+          <p style={{ fontSize: "14px", marginBottom: "12px", marginRight: "35px" }}>
+            هل أنت متأكد من أنك تريد تسجيل الخروج؟
+          </p>
+          <div
+            style={{ display: "flex", justifyContent: "center", gap: "10px" }}
+          >
+            <button
+              className="toast-confirmp"
+              onClick={() => {
+                handleLogout();
+                closeToast();
+              }}
+            >
+              تأكيد
+            </button>
+            <button className="toast-cancel" onClick={closeToast}>
+              إلغاء
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        position: "top-center",
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+        hideProgressBar: true,
+        className: "custom-toast",
+      }
+    );
   };
 
   return (
@@ -192,7 +239,7 @@ function AppRoutes() {
         path="/*"
         element={
           isLoggedIn ? (
-            <DashboardLayout onLogout={handleLogout} currentUser={currentUser} />
+            <DashboardLayout onLogout={confirmLogout} currentUser={currentUser} />
           ) : (
             <Navigate to="/login" />
           )

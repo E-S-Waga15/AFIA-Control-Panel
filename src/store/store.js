@@ -12,6 +12,8 @@ import usersDisplayReducer from './slices/usersDisplaySlice';
 import ratingReducer from './slices/ratingSlice';
 import dashboardReducer from './slices/dashboardSlice';
 import userEditReducer from './slices/userEditSlice';
+import adminReducer from './slices/adminSlice';
+import adminsDisplayReducer from './slices/adminsDisplaySlice';
 
 const store = configureStore({
     reducer: {
@@ -28,6 +30,8 @@ const store = configureStore({
         governorates: governoratesReducer,
         ratings: ratingReducer,
         dashboard: dashboardReducer,
+        admin: adminReducer,
+        adminsDisplay: adminsDisplayReducer,
     },
 });
 

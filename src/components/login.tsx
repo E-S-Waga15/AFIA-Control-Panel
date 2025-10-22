@@ -54,7 +54,7 @@ export function Login({ onLogin }: LoginProps) {
         draggable: true,
         theme: "light",
         onClose: () => {
-          window.location.reload();
+          // No reload needed, state will update automatically
         }
       });
     }

@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { RTLDialog } from './ui/rtl-dialog';
 import { Badge } from './ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Skeleton } from './ui/skeleton';
+
 import { Star, Eye, MessageCircle, TrendingUp } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { fetchRatingStats } from '../store/slices/ratingSlice';
@@ -31,6 +33,62 @@ interface Doctor {
   reviews: Review[];
 }
 
+// Loading Skeletons
+const HeaderStatsSkeleton = () => (
+  <div className={`grid gap-2 grid-cols-1 md:grid-cols-3`}>
+    {[1, 2, 3].map((i) => (
+      <Card key={i} className="bg-white shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-4 rounded" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-8 w-20 mb-2" />
+          <Skeleton className="h-3 w-16" />
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+);
+
+const DoctorsRankingSkeleton = () => (
+  <Card className="bg-white shadow-sm">
+    <CardHeader>
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-5 w-5 rounded" />
+        <Skeleton className="h-6 w-32" />
+      </div>
+    </CardHeader>
+    <CardContent className="space-y-3">
+      {[...Array(5)].map((_, index) => (
+        <div key={index} className="p-4 border rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-6 w-8" />
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-center space-y-2">
+                <div className="flex justify-center">
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-4 w-4 mx-0.5" />
+                  ))}
+                </div>
+                <Skeleton className="h-5 w-8" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+              <Skeleton className="h-9 w-20" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </CardContent>
+  </Card>
+);
 
 export function DoctorsRatings() {
   const { t, isRTL } = useLanguage();
@@ -122,18 +180,11 @@ export function DoctorsRatings() {
   if (loading) {
     return (
       <div className="space-y-4 sm:space-y-6">
-        <div className="grid gap-3 grid-cols-1 md:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="bg-white shadow-sm">
-              <CardContent className="p-6">
-                <div className="animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {/* Header Stats Skeleton */}
+        <HeaderStatsSkeleton />
+
+        {/* Doctors Ranking Skeleton */}
+        <DoctorsRankingSkeleton />
       </div>
     );
   }

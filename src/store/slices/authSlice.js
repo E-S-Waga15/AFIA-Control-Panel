@@ -11,8 +11,9 @@ export const loginUser = createAsyncThunk(
         password,
       });
 
-      // تخزين التوكن في localStorage
+      // تخزين التوكن ونوع الحساب في localStorage
       localStorage.setItem('token', response.data.token);
+      localStorage.setItem('account_type', response.data.account_type);
 
       return {
         token: response.data.token,
@@ -31,7 +32,7 @@ const authSlice = createSlice({
   name: 'auth',
   initialState: {
     token: localStorage.getItem('token') || null,
-    account_type: null,
+    account_type: localStorage.getItem('account_type') || null,
     loading: false,
     error: null,
     message: null, // أضفنا الرسالة هنا
@@ -42,6 +43,7 @@ const authSlice = createSlice({
       state.account_type = null;
       state.message = null;
       localStorage.removeItem('token');
+      localStorage.removeItem('account_type');
     },
   },
   extraReducers: (builder) => {
