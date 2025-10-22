@@ -75,6 +75,7 @@
     "city": "City",
     "accountType": "Account Type",
     "doctor": "Doctor",
+    "patient": "Patient",
     "pharmacist": "Pharmacist",
     "specialties": "Specialties",
     "bio": "Bio",

@@ -122,7 +122,7 @@ function DashboardLayout({ onLogout, currentUser }) {
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <SidebarMenuButton onClick={onLogout} className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                    <SidebarMenuButton onClick={() => { window.dispatchEvent(new CustomEvent('close-mobile-sidebar')); onLogout(); }} className="text-red-600 hover:text-red-700 hover:bg-red-50">
                       <LogOut className="w-4 h-4" />
                       <span>{t('common.logout')}</span>
                     </SidebarMenuButton>

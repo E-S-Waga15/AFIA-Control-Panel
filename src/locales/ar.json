@@ -75,6 +75,7 @@
     "city": "المدينة",
     "accountType": "نوع الحساب",
     "doctor": "طبيب",
+    "patient": "مريض",
     "pharmacist": "صيدلي",
     "specialties": "التخصصات",
     "bio": "النبذة التعريفية",
