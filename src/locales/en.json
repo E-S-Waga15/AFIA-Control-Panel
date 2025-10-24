@@ -73,6 +73,7 @@
     "nationalId": "National ID",
     "governorate": "Governorate",
     "city": "City",
+    "street":"street",
     "accountType": "Account Type",
     "doctor": "Doctor",
     "patient": "Patient",

@@ -73,6 +73,7 @@
     "nationalId": "الرقم الوطني",
     "governorate": "المحافظة",
     "city": "المدينة",
+    "street":"شارع",
     "accountType": "نوع الحساب",
     "doctor": "طبيب",
     "patient": "مريض",
