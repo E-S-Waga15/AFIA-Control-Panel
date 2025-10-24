@@ -320,7 +320,7 @@ export function UserInformation() {
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="text-sm text-muted-foreground mb-1">سعر الكشف</p>
-                                                    <p className="font-semibold text-sm">{selectedUser.price} جنيه</p>
+                                                    <p className="font-semibold text-sm">{selectedUser.price} ل . س</p>
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="text-sm text-muted-foreground mb-1">التقييم</p>
@@ -392,7 +392,7 @@ export function UserInformation() {
                                                     <TableHead className="text-white text-right text-xs sm:text-sm">التاريخ</TableHead>
                                                     <TableHead className="text-white text-right text-xs sm:text-sm">الوقت</TableHead>
                                                     <TableHead className="text-white text-right text-xs sm:text-sm">الحالة</TableHead>
-                                                    <TableHead className="text-white text-right text-xs sm:text-sm">التشخيص</TableHead>
+                                                  
                                                     <TableHead className="text-white text-right text-xs sm:text-sm">التفاصيل</TableHead>
                                                 </TableRow>
                                             </TableHeader>
@@ -425,9 +425,7 @@ export function UserInformation() {
                                                                             (item.status || '-')}
                                                                 </Badge>
                                                             </TableCell>
-                                                            <TableCell className="text-right text-xs sm:text-sm py-2 sm:py-3 max-w-[100px] sm:max-w-none">
-                                                                {item.diagnosis || '-'}
-                                                            </TableCell>
+                                                      
                                                             <TableCell className="text-right text-xs sm:text-sm py-2 sm:py-3">
                                                                 {(item.status === 'Completed' || item.status === 'مكتمل') ? (
                                                                     <Dialog>
