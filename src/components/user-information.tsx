@@ -11,7 +11,10 @@ import { Printer, Search, FileText, ArrowRight } from 'lucide-react';
 import { fetchUserProfile, clearUserProfile } from '../store/slices/userProfileSlice';
 import { appointmentsAPI } from '../services/api/appointmentsAPI';
 import logoImage from '../assets/logo2.png';
+import { useLanguage } from '../contexts/LanguageContext';
 
+
+type AppointmentStatus = 'upcoming' | 'completed' | 'canceled';
 // بيانات احتياطية في حالة عدم توفر البيانات من API
 const fallbackMockData = {
     id: '0',
@@ -43,7 +46,7 @@ const fallbackMockData = {
 };
 
 export function UserInformation() {
-
+    const { t, isRTL } = useLanguage();
     const navigate = useNavigate();
     const { userId } = useParams();
     const [appointmentDetails, setAppointmentDetails] = useState<any>(null);
@@ -54,7 +57,7 @@ export function UserInformation() {
 
     const dispatch = useDispatch();
     const { userProfile, loading, error, success } = useSelector((state: any) => state.userProfile);
-const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+    const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
     useEffect(() => {
         if (userId) {
             dispatch(fetchUserProfile(userId));
@@ -125,11 +128,6 @@ const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
     const displayAccountType = selectedUser.accountType || 'unknown';
 
-    // تتبع البيانات للتأكد من أنها تصل بشكل صحيح
-    console.log('User Profile Data:', userProfile);
-    console.log('Selected User:', selectedUser);
-    console.log('Display Account Type:', displayAccountType);
-
     const handlePrint = () => {
         window.print();
     };
@@ -170,27 +168,20 @@ const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
         return new Date(dateString).toLocaleDateString('en-GB');
     };
 
-    const getStatusBadgeProps = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'completed':
-            case 'مكتمل':
-                return {
-                    variant: 'default' as const,
-                    className: 'bg-green-100 text-green-800 hover:bg-green-200'
-                };
-            case 'scheduled':
-            case 'مجدول':
-                return {
-                    variant: 'default' as const,
-                    className: 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                };
-            default:
-                return {
-                    variant: 'outline' as const,
-                    className: ''
-                };
-        }
-    };
+  const getStatusBadgeProps = (status: AppointmentStatus) => {
+    switch (status) {
+      case 'upcoming':
+        return { variant: 'default' as const, className: '' };
+      case 'completed':
+        return { variant: 'secondary' as const, className: 'bg-green-600 text-white hover:bg-green-700' };
+      case 'canceled':
+        return { variant: 'destructive' as const, className: '' };
+      default:
+        return { variant: 'outline' as const, className: '' };
+    }
+  };
+
+
 
     if (loading) {
         return (
@@ -254,8 +245,8 @@ const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
                     <div className="border-b-2  pb-3 mb-4">
                         {/* Company Header */}
                         <div className="flex flex-col sm:flex-row items-center sm:items-start sm:justify-between mb-3 gap-4">
-                            
-                        <div className="flex items-center gap-3 order-1 sm:order-2">
+
+                            <div className="flex items-center gap-3 order-1 sm:order-2">
                                 {/* Company Logo */}
                                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center">
                                     <img src={logoImage} alt="Company Logo" className="w-full h-full object-contain" />
@@ -444,60 +435,57 @@ const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
                                         <Table>
                                             <TableHeader>
                                                 <TableRow className="bg-primary hover:bg-primary">
-                                                    <TableHead className="text-white text-right text-xs sm:text-sm">رقم الموعد</TableHead>
-                                                    <TableHead className="text-white text-right text-xs sm:text-sm">
+                                                    <TableHead className="text-white text-center text-xs w-6 sequential-number-cell">#</TableHead>
+                                                    <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">
                                                         {displayAccountType === 'doctor' ? 'اسم المريض' : 'اسم الطبيب'}
                                                     </TableHead>
-                                                    <TableHead className="text-white text-right text-xs sm:text-sm">التاريخ</TableHead>
-                                                    <TableHead className="text-white text-right text-xs sm:text-sm">الوقت</TableHead>
-                                                    <TableHead className="text-white text-right text-xs sm:text-sm">الحالة</TableHead>
-                                                  
-                                                    <TableHead className="text-white text-right text-xs sm:text-sm">التفاصيل</TableHead>
+                                                    <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">التاريخ</TableHead>
+                                                    <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">الوقت</TableHead>
+                                                    <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">الحالة</TableHead>
+
+                                                    <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">التفاصيل</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
                                                 {(displayAccountType === 'doctor' ? selectedUser.records : selectedUser.appointments).map((item, index) => {
-                                                    console.log(`${displayAccountType} data:`, item); // تتبع البيانات
                                                     const appointment = displayAccountType === 'doctor' ?
                                                         { ...item, patientName: item.patientName, doctorName: null } :
                                                         { ...item, doctorName: item.doctorName, patientName: null };
 
                                                     return (
                                                         <TableRow key={item.id || index} className={index % 2 === 0 ? 'bg-accent/30' : ''}>
-                                                            <TableCell className="font-semibold text-right text-xs sm:text-sm py-2 sm:py-3">{item.id || index + 1}</TableCell>
-                                                            <TableCell className="text-right text-xs sm:text-sm py-2 sm:py-3">
+                                                            <TableCell className="font-semibold text-center text-xs w-6 sequential-number-cell">{index + 1}</TableCell>
+                                                            <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">
                                                                 {displayAccountType === 'doctor' ? (appointment.patientName || 'غير محدد') : (appointment.doctorName || 'غير محدد')}
                                                             </TableCell>
-                                                            <TableCell className="text-right text-xs sm:text-sm py-2 sm:py-3" dir="ltr">
+                                                            <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3" dir="ltr">
                                                                 {item.date ? new Date(item.date).toLocaleDateString('en-GB') : 'غير محدد'}
                                                             </TableCell>
-                                                            <TableCell className="text-right text-xs sm:text-sm py-2 sm:py-3" dir="ltr">
+                                                            <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3" dir="ltr">
                                                                 {item.time || '-'}
                                                             </TableCell>
-                                                            <TableCell className="text-right text-xs sm:text-sm py-2 sm:py-3">
-                                                                <Badge
-                                                                    variant={(item.status === 'Completed' || item.status === 'مكتمل') ? 'default' : 'outline'}
-                                                                    className={`text-xs sm:text-sm px-2 py-1 ${(item.status === 'Completed' || item.status === 'مكتمل') ? ' bg-primary/10 text-primary' : ''}`}
-                                                                >
-                                                                    {item.status === 'Completed' || item.status === 'مكتمل' ? 'مكتمل' :
-                                                                        item.status === 'Scheduled' || item.status === 'مجدول' ? 'مجدول' :
-                                                                            (item.status || '-')}
+                                                            <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">
+
+                                                                <Badge variant={getStatusBadgeProps(item.status).variant} className={`text-xs sm:text-sm px-1 py-1 ${getStatusBadgeProps(item.status).className}`}>
+                                                                    {item.status === 'upcoming' ? t('appointments.scheduled') :
+                                                                        item.status === 'completed' ? t('appointments.completed') :
+                                                                            t('appointments.cancelled')}
                                                                 </Badge>
                                                             </TableCell>
-                                                      
-                                                            <TableCell className="text-right text-xs sm:text-sm py-2 sm:py-3">
+
+                                                            <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">
                                                                 {(item.status === 'completed' || item.status === 'مكتمل') ? (
                                                                     <Button
                                                                         variant="outline"
                                                                         size="sm"
-                                                                        className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
+                                                                        className="gap-1 text-xs px-1 py-1"
                                                                         onClick={() => fetchAppointmentDetails(item.id)}
                                                                     >
-                                                                        <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                                        <span className="sm:hidden">عرض</span>
+                                                                        <FileText className="w-3 h-3" />
+                                                                       {isMobile? <></>:<span className="sm:hidden">عرض التفاصيل</span> } 
                                                                     </Button>
                                                                 ) : (
-                                                                    <span className="text-muted-foreground text-sm">-</span>
+                                                                    <span className="text-muted-foreground text-xs">-</span>
                                                                 )}
                                                             </TableCell>
                                                         </TableRow>
@@ -522,25 +510,24 @@ const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
                                     <Table>
                                         <TableHeader>
                                             <TableRow className="bg-secondary hover:bg-secondary">
-                                                <TableHead className="text-white text-right text-xs sm:text-sm">رقم الصرف</TableHead>
-                                                <TableHead className="text-white text-right text-xs sm:text-sm">اسم الدواء</TableHead>
-                                                <TableHead className="text-white text-right text-xs sm:text-sm">الكمية</TableHead>
-                                                <TableHead className="text-white text-right text-xs sm:text-sm">الصيدلية</TableHead>
-                                                <TableHead className="text-white text-right text-xs sm:text-sm">الصيدلي</TableHead>
-                                                <TableHead className="text-white text-right text-xs sm:text-sm">التاريخ</TableHead>
+                                                <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-1 w-6 sequential-number-cell">#</TableHead>
+                                                <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">اسم الدواء</TableHead>
+                                                <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">الكمية</TableHead>
+                                                <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">الصيدلية</TableHead>
+                                                <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">الصيدلي</TableHead>
+                                                <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">التاريخ</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {selectedUser.medications.map((medication, index) => {
-                                                console.log('Medication data:', medication); // تتبع البيانات
                                                 return (
                                                     <TableRow key={medication.id || index} className={index % 2 === 0 ? 'bg-accent/30' : ''}>
-                                                        <TableCell className="font-semibold text-right text-xs sm:text-sm py-2 sm:py-3">{medication.id || index + 1}</TableCell>
-                                                        <TableCell className="text-right text-xs sm:text-sm py-2 sm:py-3">{medication.name || medication.medicationName || 'غير محدد'}</TableCell>
-                                                        <TableCell className="text-right text-xs sm:text-sm py-2 sm:py-3">{medication.quantity || 'غير محدد'}</TableCell>
-                                                        <TableCell className="text-right text-xs sm:text-sm py-2 sm:py-3">{medication.pharmacyName || medication.pharmacy_name || 'غير محدد'}</TableCell>
-                                                        <TableCell className="text-right text-xs sm:text-sm py-2 sm:py-3">{medication.dispensedBy || medication.pharmacistName || 'غير محدد'}</TableCell>
-                                                        <TableCell className="text-right text-xs sm:text-sm py-2 sm:py-3" dir="ltr">
+                                                        <TableCell className="font-semibold text-center text-xs sm:text-sm py-2 sm:py-1 w-6 sequential-number-cell">{index + 1}</TableCell>
+                                                        <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-1 px-1 sm:px-3">{medication.name || medication.medicationName || 'غير محدد'}</TableCell>
+                                                        <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-1 px-1 sm:px-3">{medication.quantity || 'غير محدد'}</TableCell>
+                                                        <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-1 px-1 sm:px-3">{medication.pharmacyName || medication.pharmacy_name || 'غير محدد'}</TableCell>
+                                                        <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-1 px-1 sm:px-3">{medication.dispensedBy || medication.pharmacistName || 'غير محدد'}</TableCell>
+                                                        <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-1 px-1 sm:px-3" dir="ltr">
                                                             {medication.date ? new Date(medication.date).toLocaleDateString('en-GB') : 'غير محدد'}
                                                         </TableCell>
                                                     </TableRow>
@@ -556,7 +543,7 @@ const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
                     {/* Dispensed Medications Table - For Pharmacist Only */}
                     {displayAccountType === 'pharmacist' && selectedUser.records && selectedUser.records.length > 0 && (
                         <div className="mb-8">
-                            <h3 className="font-semibold text-primary mb-3 py-3  border-t-2 border-b-2 text-right"
+                            <h3 className="font-semibold text-primary mb-3 py-3  border-t-2 border-b-2 text-center"
                                 style={{ borderColor: '#1e3561', borderTopWidth: '2px', borderBottomWidth: '2px' }}>
                                 الأدوية المصروفة للمرضى ({selectedUser.records.length} صرفية)
                             </h3>
@@ -565,23 +552,22 @@ const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
                                     <Table>
                                         <TableHeader>
                                             <TableRow className="bg-primary hover:bg-primary">
-                                                <TableHead className="text-white text-right text-xs sm:text-sm">رقم الصرف</TableHead>
-                                                <TableHead className="text-white text-right text-xs sm:text-sm">اسم الدواء</TableHead>
-                                                <TableHead className="text-white text-right text-xs sm:text-sm">اسم المريض</TableHead>
-                                                <TableHead className="text-white text-right text-xs sm:text-sm">الكمية</TableHead>
-                                                <TableHead className="text-white text-right text-xs sm:text-sm">التاريخ</TableHead>
+                                                <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 w-6 sequential-number-cell">#</TableHead>
+                                                <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">اسم الدواء</TableHead>
+                                                <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">اسم المريض</TableHead>
+                                                <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">الكمية</TableHead>
+                                                <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">التاريخ</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {selectedUser.records.map((record, index) => {
-                                                console.log('Pharmacist record data:', record); // تتبع البيانات
                                                 return (
                                                     <TableRow key={record.id || index} className={index % 2 === 0 ? 'bg-accent/30' : ''}>
-                                                        <TableCell className="font-semibold text-right text-xs sm:text-sm py-2 sm:py-3">{record.id || index + 1}</TableCell>
-                                                        <TableCell className="text-right text-xs sm:text-sm py-2 sm:py-3">{record.medicationName || record.name || 'غير محدد'}</TableCell>
-                                                        <TableCell className="text-right text-xs sm:text-sm py-2 sm:py-3">{record.patientName || record.patient_name || 'غير محدد'}</TableCell>
-                                                        <TableCell className="text-right text-xs sm:text-sm py-2 sm:py-3">{record.quantity || 'غير محدد'}</TableCell>
-                                                        <TableCell className="text-right text-xs sm:text-sm py-2 sm:py-3" dir="ltr">
+                                                        <TableCell className="font-semibold text-center text-xs sm:text-sm py-1 sm:py-1 w-6 sequential-number-cell">{index + 1}</TableCell>
+                                                        <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">{record.medicationName || record.name || 'غير محدد'}</TableCell>
+                                                        <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">{record.patientName || record.patient_name || 'غير محدد'}</TableCell>
+                                                        <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">{record.quantity || 'غير محدد'}</TableCell>
+                                                        <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3" dir="ltr">
                                                             {record.date ? new Date(record.date).toLocaleDateString('en-GB') : 'غير محدد'}
                                                         </TableCell>
                                                     </TableRow>
@@ -625,23 +611,23 @@ const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
                 open={isDetailsOpen}
                 onOpenChange={setIsDetailsOpen}
                 title="تفاصيل الموعد"
-                 maxWidth={isMobile ? "w-300px" : "max-w-4xl"}
+                maxWidth={isMobile ? "w-300px" : "max-w-4xl"}
             >
                 {selectedAppointment && (
                     <div className="space-y-6">
                         {/* معلومات المريض والطبيب */}
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <Label>اسم المريض</Label>
-                                <div className="p-2 bg-muted rounded mt-1">{selectedAppointment.patient_name || 'غير محدد'}</div>
+                                <div className="p-2 bg-muted rounded mt-1 text-sm sm:text-base">{selectedAppointment.patient_name || 'غير محدد'}</div>
                             </div>
                             <div>
                                 <Label>اسم الطبيب</Label>
-                                <div className="p-2 bg-muted rounded mt-1">{selectedAppointment.doctor_name || 'غير محدد'}</div>
+                                <div className="p-2 bg-muted rounded mt-1 text-sm sm:text-base">{selectedAppointment.doctor_name || 'غير محدد'}</div>
                             </div>
                         </div>
 
-             
+
 
                         {/* التخصصات */}
                         {selectedAppointment.specialization && (
@@ -650,13 +636,13 @@ const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
                                 <div className="p-3 bg-muted rounded mt-1">
                                     {Array.isArray(selectedAppointment.specialization) ? (
                                         selectedAppointment.specialization.map((spec, index) => (
-                                            <span key={index} className="inline-block bg-primary/10 text-primary px-2 py-1 rounded text-sm mr-2 mb-1">
+                                            <span key={index} className="inline-block bg-primary/10 text-primary px-2 py-1 rounded text-xs sm:text-sm mr-2 mb-1">
                                                 {spec.name || spec}
                                                 <span> </span>
                                             </span>
                                         ))
                                     ) : (
-                                        <span className="inline-block bg-primary/10 text-primary px-2 py-1 rounded text-sm">
+                                        <span className="inline-block bg-primary/10 text-primary px-2 py-1 rounded text-xs sm:text-sm">
                                             {selectedAppointment.specialization}
                                         </span>
                                     )}
@@ -672,12 +658,12 @@ const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
                                     {Array.isArray(selectedAppointment.diagnostics) ? (
                                         selectedAppointment.diagnostics.map((diagnostic, index) => (
                                             <div key={index} className="mb-2">
-                                                <div className="font-medium">{diagnostic.name || diagnostic}</div>
+                                                <div className="font-medium text-sm sm:text-base">{diagnostic.name || diagnostic}</div>
                                                 {diagnostic.image_path && (
                                                     <img
                                                         src={diagnostic.image_path}
                                                         alt={diagnostic.name || diagnostic}
-                                                        className="w-20 h-20 object-cover rounded mt-1"
+                                                        className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded mt-1"
                                                         onError={(e) => {
                                                             e.currentTarget.style.display = 'none';
                                                         }}
@@ -686,7 +672,7 @@ const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="font-medium">{String(selectedAppointment.diagnostics)}</div>
+                                        <div className="font-medium text-sm sm:text-base">{String(selectedAppointment.diagnostics)}</div>
                                     )}
                                 </div>
                             </div>
@@ -699,17 +685,17 @@ const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
                                 <div className="p-3 bg-muted rounded mt-1">
                                     {Array.isArray(selectedAppointment.medicines) ? (
                                         selectedAppointment.medicines.map((medicine, index) => (
-                                            <div key={index} className="flex justify-between items-center p-2 bg-background rounded">
-                                                <span>{medicine.medicine_name || medicine}</span>
-                                                <span className="text-sm text-muted-foreground">
+                                            <div key={index} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-2 bg-background rounded gap-2">
+                                                <span className="text-sm sm:text-base font-medium">{medicine.medicine_name || medicine}</span>
+                                                <span className="text-xs sm:text-sm text-muted-foreground">
                                                     {medicine.quantity || 0} وحدة ({medicine.number_of_taken_doses || 0} مأخوذة)
                                                 </span>
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="flex justify-between items-center p-2 bg-background rounded">
-                                            <span>{String(selectedAppointment.medicines)}</span>
-                                            <span className="text-sm text-muted-foreground">غير محدد</span>
+                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-2 bg-background rounded gap-2">
+                                            <span className="text-sm sm:text-base">{String(selectedAppointment.medicines)}</span>
+                                            <span className="text-xs sm:text-sm text-muted-foreground">غير محدد</span>
                                         </div>
                                     )}
                                 </div>
@@ -752,7 +738,6 @@ const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
             overflow: visible !important;
           }
 
-        
 
           /* تحسين تخطيط الطباعة */
           .space-y-6 > * + * {
