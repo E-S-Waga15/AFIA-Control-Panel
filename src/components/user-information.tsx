@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Badge } from './ui/badge';
 import { RTLDialog } from './ui/rtl-dialog';
 import { Label } from './ui/label';
+import { Skeleton } from './ui/skeleton';
 import { Printer, Search, FileText, ArrowRight } from 'lucide-react';
 import { fetchUserProfile, clearUserProfile } from '../store/slices/userProfileSlice';
 import { appointmentsAPI } from '../services/api/appointmentsAPI';
@@ -139,12 +140,12 @@ export function UserInformation() {
     const fetchAppointmentDetails = async (appointmentId) => {
         setDetailsLoading(true);
         setDetailsError(null);
+        setIsDetailsOpen(true);  // Open modal immediately
         try {
             const response = await appointmentsAPI.getAppointmentById(appointmentId);
             if (response.success) {
                 setAppointmentDetails(response.data);
                 setSelectedAppointment(response.data);
-                setIsDetailsOpen(true);
             } else {
                 setDetailsError('فشل في جلب تفاصيل الموعد');
             }
@@ -168,18 +169,18 @@ export function UserInformation() {
         return new Date(dateString).toLocaleDateString('en-GB');
     };
 
-  const getStatusBadgeProps = (status: AppointmentStatus) => {
-    switch (status) {
-      case 'upcoming':
-        return { variant: 'default' as const, className: '' };
-      case 'completed':
-        return { variant: 'secondary' as const, className: 'bg-green-600 text-white hover:bg-green-700' };
-      case 'canceled':
-        return { variant: 'destructive' as const, className: '' };
-      default:
-        return { variant: 'outline' as const, className: '' };
-    }
-  };
+    const getStatusBadgeProps = (status: AppointmentStatus) => {
+        switch (status) {
+            case 'upcoming':
+                return { variant: 'default' as const, className: '' };
+            case 'completed':
+                return { variant: 'secondary' as const, className: 'bg-green-600 text-white hover:bg-green-700' };
+            case 'canceled':
+                return { variant: 'destructive' as const, className: '' };
+            default:
+                return { variant: 'outline' as const, className: '' };
+        }
+    };
 
 
 
@@ -482,7 +483,7 @@ export function UserInformation() {
                                                                         onClick={() => fetchAppointmentDetails(item.id)}
                                                                     >
                                                                         <FileText className="w-3 h-3" />
-                                                                       {isMobile? <></>:<span className="sm:hidden">عرض التفاصيل</span> } 
+                                                                        {isMobile ? <></> : <span className="sm:hidden">عرض التفاصيل</span>}
                                                                     </Button>
                                                                 ) : (
                                                                     <span className="text-muted-foreground text-xs">-</span>
@@ -613,7 +614,41 @@ export function UserInformation() {
                 title="تفاصيل الموعد"
                 maxWidth={isMobile ? "w-300px" : "max-w-4xl"}
             >
-                {selectedAppointment && (
+                {detailsLoading ? (
+                    <div className="space-y-6">
+                        {/* Loading Skeletons */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <Skeleton className="h-4 w-20 mb-2" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                            <div>
+                                <Skeleton className="h-4 w-20 mb-2" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                        </div>
+                        <div>
+                            <Skeleton className="h-4 w-20 mb-2" />
+                            <Skeleton className="h-20 w-full" />
+                        </div>
+                        <div>
+                            <Skeleton className="h-4 w-32 mb-2" />
+                            <Skeleton className="h-20 w-full" />
+                        </div>
+                        <div>
+                            <Skeleton className="h-4 w-28 mb-2" />
+                            <Skeleton className="h-20 w-full" />
+                        </div>
+                        <div className="flex justify-end">
+                            <Skeleton className="h-10 w-20" />
+                        </div>
+                    </div>
+                ) : detailsError ? (
+                    <div className="text-center py-4">
+                        <p className="text-red-500">{detailsError}</p>
+                        <Button onClick={handleCloseModal} className="mt-2">إغلاق</Button>
+                    </div>
+                ) : selectedAppointment ? (
                     <div className="space-y-6">
                         {/* معلومات المريض والطبيب */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -706,6 +741,11 @@ export function UserInformation() {
                         <div className="flex justify-end">
                             <Button onClick={handleCloseModal}>إغلاق</Button>
                         </div>
+                    </div>
+                ) : (
+                    <div className="text-center py-4">
+                        <p className="text-muted-foreground">لا توجد بيانات متاحة</p>
+                        <Button onClick={handleCloseModal} className="mt-2">إغلاق</Button>
                     </div>
                 )}
             </RTLDialog>
