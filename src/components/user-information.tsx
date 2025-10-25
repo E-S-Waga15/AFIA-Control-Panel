@@ -5,9 +5,11 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Badge } from './ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { RTLDialog } from './ui/rtl-dialog';
+import { Label } from './ui/label';
 import { Printer, Search, FileText, ArrowRight } from 'lucide-react';
 import { fetchUserProfile, clearUserProfile } from '../store/slices/userProfileSlice';
+import { appointmentsAPI } from '../services/api/appointmentsAPI';
 import logoImage from '../assets/logo2.png';
 
 // بيانات احتياطية في حالة عدم توفر البيانات من API
@@ -44,12 +46,15 @@ export function UserInformation() {
 
     const navigate = useNavigate();
     const { userId } = useParams();
-
-
+    const [appointmentDetails, setAppointmentDetails] = useState<any>(null);
+    const [detailsLoading, setDetailsLoading] = useState(false);
+    const [detailsError, setDetailsError] = useState<string | null>(null);
+    const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+    const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
 
     const dispatch = useDispatch();
-    const { userProfile, loading, error, success } = useSelector((state) => state.userProfile);
-
+    const { userProfile, loading, error, success } = useSelector((state: any) => state.userProfile);
+const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
     useEffect(() => {
         if (userId) {
             dispatch(fetchUserProfile(userId));
@@ -131,6 +136,60 @@ export function UserInformation() {
 
     const handleGoBack = () => {
         navigate('/users');
+    };
+
+    const fetchAppointmentDetails = async (appointmentId) => {
+        setDetailsLoading(true);
+        setDetailsError(null);
+        try {
+            const response = await appointmentsAPI.getAppointmentById(appointmentId);
+            if (response.success) {
+                setAppointmentDetails(response.data);
+                setSelectedAppointment(response.data);
+                setIsDetailsOpen(true);
+            } else {
+                setDetailsError('فشل في جلب تفاصيل الموعد');
+            }
+        } catch (error) {
+            setDetailsError('حدث خطأ أثناء جلب تفاصيل الموعد');
+            console.error('Error fetching appointment details:', error);
+        } finally {
+            setDetailsLoading(false);
+        }
+    };
+
+    const handleCloseModal = () => {
+        setIsDetailsOpen(false);
+        setAppointmentDetails(null);
+        setSelectedAppointment(null);
+        setDetailsError(null);
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return '-';
+        return new Date(dateString).toLocaleDateString('en-GB');
+    };
+
+    const getStatusBadgeProps = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'completed':
+            case 'مكتمل':
+                return {
+                    variant: 'default' as const,
+                    className: 'bg-green-100 text-green-800 hover:bg-green-200'
+                };
+            case 'scheduled':
+            case 'مجدول':
+                return {
+                    variant: 'default' as const,
+                    className: 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                };
+            default:
+                return {
+                    variant: 'outline' as const,
+                    className: ''
+                };
+        }
     };
 
     if (loading) {
@@ -427,29 +486,16 @@ export function UserInformation() {
                                                             </TableCell>
                                                       
                                                             <TableCell className="text-right text-xs sm:text-sm py-2 sm:py-3">
-                                                                {(item.status === 'Completed' || item.status === 'مكتمل') ? (
-                                                                    <Dialog>
-                                                                        <DialogTrigger asChild>
-                                                                            <Button variant="outline" size="sm" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2">
-                                                                                <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                                                <span className="hidden sm:inline">عرض التفاصيل</span>
-                                                                                <span className="sm:hidden">عرض</span>
-                                                                            </Button>
-                                                                        </DialogTrigger>
-                                                                        <DialogContent className="max-w-2xl" dir="rtl">
-                                                                            <DialogHeader>
-                                                                                <DialogTitle className="text-right">تفاصيل الموعد - {item.id}</DialogTitle>
-                                                                            </DialogHeader>
-                                                                            <div className="space-y-4 text-right">
-                                                                                {item.diagnosis && (
-                                                                                    <div className="bg-accent p-4 rounded-lg">
-                                                                                        <h4 className="font-semibold text-primary mb-2">التشخيص</h4>
-                                                                                        <p>{item.diagnosis}</p>
-                                                                                    </div>
-                                                                                )}
-                                                                            </div>
-                                                                        </DialogContent>
-                                                                    </Dialog>
+                                                                {(item.status === 'completed' || item.status === 'مكتمل') ? (
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
+                                                                        onClick={() => fetchAppointmentDetails(item.id)}
+                                                                    >
+                                                                        <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+                                                                        <span className="sm:hidden">عرض</span>
+                                                                    </Button>
                                                                 ) : (
                                                                     <span className="text-muted-foreground text-sm">-</span>
                                                                 )}
@@ -573,6 +619,110 @@ export function UserInformation() {
                 </div>
             </div>
 
+
+            {/* Appointment Details Modal */}
+            <RTLDialog
+                open={isDetailsOpen}
+                onOpenChange={setIsDetailsOpen}
+                title="تفاصيل الموعد"
+                 maxWidth={isMobile ? "w-300px" : "max-w-4xl"}
+            >
+                {selectedAppointment && (
+                    <div className="space-y-6">
+                        {/* معلومات المريض والطبيب */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label>اسم المريض</Label>
+                                <div className="p-2 bg-muted rounded mt-1">{selectedAppointment.patient_name || 'غير محدد'}</div>
+                            </div>
+                            <div>
+                                <Label>اسم الطبيب</Label>
+                                <div className="p-2 bg-muted rounded mt-1">{selectedAppointment.doctor_name || 'غير محدد'}</div>
+                            </div>
+                        </div>
+
+             
+
+                        {/* التخصصات */}
+                        {selectedAppointment.specialization && (
+                            <div>
+                                <Label>اختصاص</Label>
+                                <div className="p-3 bg-muted rounded mt-1">
+                                    {Array.isArray(selectedAppointment.specialization) ? (
+                                        selectedAppointment.specialization.map((spec, index) => (
+                                            <span key={index} className="inline-block bg-primary/10 text-primary px-2 py-1 rounded text-sm mr-2 mb-1">
+                                                {spec.name || spec}
+                                                <span> </span>
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <span className="inline-block bg-primary/10 text-primary px-2 py-1 rounded text-sm">
+                                            {selectedAppointment.specialization}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* التحاليل الطبية */}
+                        {selectedAppointment.diagnostics && (
+                            <div>
+                                <Label>التحاليل الطبية</Label>
+                                <div className="p-3 bg-muted rounded mt-1">
+                                    {Array.isArray(selectedAppointment.diagnostics) ? (
+                                        selectedAppointment.diagnostics.map((diagnostic, index) => (
+                                            <div key={index} className="mb-2">
+                                                <div className="font-medium">{diagnostic.name || diagnostic}</div>
+                                                {diagnostic.image_path && (
+                                                    <img
+                                                        src={diagnostic.image_path}
+                                                        alt={diagnostic.name || diagnostic}
+                                                        className="w-20 h-20 object-cover rounded mt-1"
+                                                        onError={(e) => {
+                                                            e.currentTarget.style.display = 'none';
+                                                        }}
+                                                    />
+                                                )}
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="font-medium">{String(selectedAppointment.diagnostics)}</div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* الأدوية الموصوفة */}
+                        {selectedAppointment.medicines && (
+                            <div>
+                                <Label>الأدوية الموصوفة</Label>
+                                <div className="p-3 bg-muted rounded mt-1">
+                                    {Array.isArray(selectedAppointment.medicines) ? (
+                                        selectedAppointment.medicines.map((medicine, index) => (
+                                            <div key={index} className="flex justify-between items-center p-2 bg-background rounded">
+                                                <span>{medicine.medicine_name || medicine}</span>
+                                                <span className="text-sm text-muted-foreground">
+                                                    {medicine.quantity || 0} وحدة ({medicine.number_of_taken_doses || 0} مأخوذة)
+                                                </span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="flex justify-between items-center p-2 bg-background rounded">
+                                            <span>{String(selectedAppointment.medicines)}</span>
+                                            <span className="text-sm text-muted-foreground">غير محدد</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* زر الإغلاق */}
+                        <div className="flex justify-end">
+                            <Button onClick={handleCloseModal}>إغلاق</Button>
+                        </div>
+                    </div>
+                )}
+            </RTLDialog>
 
             {/* Print Styles */}
             <style>{`

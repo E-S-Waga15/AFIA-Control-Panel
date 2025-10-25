@@ -1145,7 +1145,7 @@ price: parseFloat(formData.price) || 0,
                             <div className="mt-1">
                               {selectedAccountTypeFilter === 'patient' ? (
                                 <span className="text-sm bg-muted px-6 py-1 rounded text-xs   ">
-                                      {user.nationalId || t('users.noNationalId')}
+                                      {       user.national_id || t('users.noNationalId')}
                                 </span>
                               ) : selectedAccountTypeFilter === 'pharmacist' ? (
                                 <span className="text-sm bg-muted px-2 py-1 rounded text-xs justify-center items-center">

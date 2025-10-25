@@ -591,6 +591,7 @@ export function AdminManagement() {
                 </div>
               ) : (
                 admins.map((admin) => (
+                  <>
                   <Card key={admin.id} className="mobile-card mobile-padding">
                     <CardContent className="pb-0">
                       <div className="mobile-card-header flex items-center justify-between">
@@ -658,7 +659,11 @@ export function AdminManagement() {
                         </div>
                       </div>
                     </CardContent>
+                    
                   </Card>
+                    <div className="h-2"></div>
+                   </>
+
                 ))
               )}
             </div>
