@@ -223,7 +223,7 @@ export function ServicesManagement() {
         draggable: true,
         theme: "light",
         onClose: () => {
-
+           (dispatch as any)(fetchSpecialties());
         }
       });
 
@@ -253,7 +253,7 @@ export function ServicesManagement() {
         draggable: true,
         theme: "light",
         onClose: () => {
-
+           (dispatch as any)(fetchSpecialties());
         }
       });
 
@@ -283,7 +283,7 @@ export function ServicesManagement() {
         draggable: true,
         theme: "light",
         onClose: () => {
-
+           (dispatch as any)(fetchBanners());
         }
       });
 

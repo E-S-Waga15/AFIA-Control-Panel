@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: 'https://afia.medlifesy.org/public/api',
+ // baseURL: 'https://afia.medlifesy.org/public/api',
+   baseURL: 'http://192.168.1.6:8000/api',
   headers: {
   
   },

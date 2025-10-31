@@ -37,7 +37,7 @@ const updateAdmin = createAsyncThunk(
   'admin/updateAdmin',
   async ({ adminId, adminData }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.put(`/admins/${adminId}?_method=PUT`, adminData);
+      const response = await axiosInstance.put(`/admins/${adminId}`, adminData);
 
       if (response.data.success) {
         return {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, CheckCircle, XCircle, Loader2, Power, PowerOff } from "lucide-react";
+import { Plus, Edit, Trash2, CheckCircle, XCircle, Loader2, Power, PowerOff ,Eye, EyeOff} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { Button } from "./ui/button";
 import {
@@ -32,7 +32,7 @@ import {
 import { RTLSelect } from "./ui/rtl-select";
 import { RTLDialog } from "./ui/rtl-dialog";
 import { toast } from 'react-toastify';
-import { registerAdmin, deleteAdminAPI, toggleAdminStatusAPI } from "../store/slices/adminSlice";
+import { registerAdmin, deleteAdminAPI, toggleAdminStatusAPI, updateAdmin } from "../store/slices/adminSlice";
 import { fetchAdmins } from "../store/slices/adminsDisplaySlice";
 import CustomDatePicker from './ui/CustomDatePicker';
 import "./../styles/responsive-utils.css";
@@ -85,7 +85,7 @@ export function AdminManagement() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+ const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<{
     fullName: string;
     username: string;
@@ -134,35 +134,36 @@ export function AdminManagement() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // إعداد البيانات للإرسال - سيتم إرسالها بالأسماء التالية:
-      // fullName, username, phone, password, gender, birthdate
-      const adminData: AdminAPIData = {
+      // إعداد البيانات الأساسية
+      const adminData: any = {
         fullName: formData.fullName,
         username: formData.username,
         phone: formData.phone,
-        password: formData.password,
         gender: formData.gender,
         birthdate: formData.birthdate,
       };
 
-      // إعداد البيانات للإرسال
-      const formDataToSend = new FormData();
-
-      // إضافة البيانات النصية
-      formDataToSend.append('fullName', adminData.fullName || '');
-      formDataToSend.append('username', adminData.username || '');
-      formDataToSend.append('phone', adminData.phone || '');
-      formDataToSend.append('password', adminData.password || '');
-      formDataToSend.append('gender', adminData.gender || '');
-      formDataToSend.append('birthdate', adminData.birthdate || '');
+      // إضافة كلمة المرور فقط إذا تم إدخالها (في حالة التعديل أو الإنشاء)
+      if (formData.password) {
+        adminData.password = formData.password;
+      }
 
       // إرسال البيانات إلى API
       let result;
       if (editingAdmin) {
-        // للتعديل، أرسل البيانات كـ object (سيتم إضافة API التعديل لاحقاً)
-        result = { payload: { success: true, message: "Admin updated successfully" } };
+        // للتعديل، استخدم updateAdmin مع معرف الإدمن والبيانات الجديدة
+        // لا نرسل كلمة المرور إذا لم يتم تغييرها
+        const updateData = { ...adminData };
+        if (!formData.password) {
+          delete updateData.password; // حذف حقل كلمة المرور إذا كان فارغًا
+        }
+        
+        result = await (dispatch as any)(updateAdmin({ 
+          adminId: editingAdmin.id, 
+          adminData: updateData 
+        }));
       } else {
-        // للإنشاء، أرسل البيانات كـ object
+        // للإنشاء، استخدم registerAdmin
         result = await (dispatch as any)(registerAdmin(adminData as any));
       }
 
@@ -526,8 +527,9 @@ export function AdminManagement() {
 
             <div className="w-full">
               <Label>{t('login.password')}</Label>
+               <div className="relative w-full">
               <Input
-                type="password"
+                   type={showPassword ? "text" : "password"}
                 value={formData.password}
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
@@ -544,6 +546,19 @@ export function AdminManagement() {
                   direction: isRTL ? 'rtl' : 'ltr'
                 }}
               />
+               <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-6 w-6" />
+                  ) : (
+                    <Eye className="h-6 w-6" />
+                  )}
+                    <div className='w-4'></div>
+                </button>
+            </div>
             </div>
 
             <div className={`flex justify-end gap-4 ${isMobile ? 'flex-col space-y-2' : ''}`}>

@@ -58,15 +58,26 @@ export const updateBanner = createAsyncThunk(
   async ({ id, bannerData }, { rejectWithValue }) => {
     try {
       const formData = new FormData();
+      formData.append('_method', 'PUT'); // Add method spoofing for Laravel
       formData.append('description', bannerData.description);
 
       if (bannerData.image) {
-        formData.append('image', bannerData.image);
+        // If it's a File object (new image), append it directly
+        if (bannerData.image instanceof File) {
+          formData.append('image', bannerData.image);
+        }
+        // If it's a string (existing image URL), don't append it to avoid errors
       }
 
-      const response = await axiosInstance.put(`/settings/banners/${id}?_method=PUT`, formData);
+      const response = await axiosInstance.post(`/settings/banners/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
       if (response.data.success) {
+        // Refresh banners list after successful update
+        
         return response.data;
       } else {
         return rejectWithValue(response.data.message || 'فشل في تعديل البانر');

@@ -47,7 +47,7 @@ export const updateSpecialty = createAsyncThunk(
         formData.append('image', specialtyData.image);
       }
 
-      const response = await axiosInstance.put(`/admin/specialization/${id}`, formData, {
+      const response = await axiosInstance.post(`/specializations/${id}/update`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

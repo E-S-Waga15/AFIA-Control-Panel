@@ -15,6 +15,7 @@ import "../styles/responsive-utils.css";
 
 export function DashboardHome() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
+   const [isExporting, setIsExporting] = useState(false);
   const { t, isRTL } = useLanguage();
   const dispatch = useDispatch();
 
@@ -250,45 +251,8 @@ export function DashboardHome() {
     </Card>
   );
    
-  const handleExportReport = () => {
-    // In a real app, this would generate and download a report
-    const reportData = {
-      period: selectedPeriod,
-      data: chartData,
-      summary: totalStats,
-      generatedAt: new Date().toISOString()
-    };
-    
-    const dataStr = JSON.stringify(reportData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `medlife-report-${selectedPeriod}-${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    
-    URL.revokeObjectURL(url);
-  };
-  const handleExportDetailedReport = () => {
-    const detailedReport = {
-      period: selectedPeriod,
-      topDoctors,
-      appointmentStatistics: appointmentStats,
-      generatedAt: new Date().toISOString(),
-    };
-    
-    const dataStr = JSON.stringify(detailedReport, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `medlife-detailed-report-${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    
-    URL.revokeObjectURL(url);
-  };
+
+
   return (
     <div className="w-full min-h-screen bg-gray-50">
       {/* Header Section */}
@@ -308,7 +272,17 @@ export function DashboardHome() {
             <SelectItem value="week">{t('dashboard.weekly')}</SelectItem>
             <SelectItem value="month">{t('dashboard.monthly')}</SelectItem>
           </RTLSelect>
-          <Button onClick={handleExportReport} className="bg-primary hover:bg-primary/90">
+          <Button 
+            onClick={() => {
+              const link = document.createElement('a');
+              link.href = 'http://192.168.1.6:8000/api/generate-report';
+              link.download = 'report.xlsx';
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }}
+            className="bg-primary hover:bg-primary/90"
+          >
             <Download className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
             {t('dashboard.exportReport')}
           </Button>

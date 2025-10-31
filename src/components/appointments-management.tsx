@@ -33,6 +33,10 @@ interface Appointment {
     name: string;
     image_path: string;
   }>;
+  Analysis: Array<{
+    name: string;
+    image_path: string;
+  }>;
   time: string;
   date: string;
   medicines: Array<{
@@ -129,13 +133,13 @@ export function AppointmentsManagement() {
   const getStatusBadgeProps = (status: AppointmentStatus) => {
     switch (status) {
       case 'upcoming':
-        return { variant: 'default' as const, className: '' };
+        return { variant: 'default' as const, className:  'bg-primary text-white hover:bg-primary' };
       case 'completed':
         return { variant: 'secondary' as const, className: 'bg-green-600 text-white hover:bg-green-700' };
       case 'canceled':
-        return { variant: 'destructive' as const, className: '' };
+        return { variant: 'destructive' as const, className: 'bg-secondary text-white hover:bg-secondary' };
       default:
-        return { variant: 'outline' as const, className: '' };
+        return { variant: 'outline' as const, className: 'bg-secondary text-white hover:bg-secondary' };
     }
   };
 
@@ -270,7 +274,8 @@ export function AppointmentsManagement() {
                     <TableRow>
                       <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.patientName')}</TableHead>
                       <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.doctorName')}</TableHead>
-                      <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.date')} & {t('appointments.time')}</TableHead>
+                      <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.date')} </TableHead>
+                      <TableHead className={isRTL ? 'text-right' : 'text-left'}> {t('appointments.time')}</TableHead>
                       <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('appointments.status')}</TableHead>
                       <TableHead className={isRTL ? 'text-right' : 'text-left'}>{t('common.actions')}</TableHead>
                     </TableRow>
@@ -281,10 +286,16 @@ export function AppointmentsManagement() {
                         <TableCell className={isRTL ? 'text-right' : 'text-left'}>{appointment.patient_name}</TableCell>
                         <TableCell className={isRTL ? 'text-right' : 'text-left'}>{appointment.doctor_name}</TableCell>
                         <TableCell className={isRTL ? 'text-right' : 'text-left'}>
-                          <div>
+                        
                             <div>{formatDate(appointment.date)}</div>
+                        
+                        
+                        </TableCell>
+                        <TableCell className={isRTL ? 'text-right' : 'text-left'}>
+                          
+                          
                             <div className="text-sm text-muted-foreground">{appointment.time}</div>
-                          </div>
+                          
                         </TableCell>
                         <TableCell className={isRTL ? 'text-right' : 'text-left'}>
                           <Badge variant={getStatusBadgeProps(appointment.status).variant} className={getStatusBadgeProps(appointment.status).className}>
@@ -383,7 +394,10 @@ export function AppointmentsManagement() {
                 <Label>Status</Label>
                 <div className="p-2">
                   <Badge variant={getStatusBadgeProps(selectedAppointment.status).variant} className={getStatusBadgeProps(selectedAppointment.status).className}>
-                    {selectedAppointment.status}
+                   
+                       {selectedAppointment.status === 'upcoming' ? t('appointments.scheduled') :
+                             selectedAppointment.status === 'completed' ? t('appointments.completed') :
+                             t('appointments.cancelled')}
                   </Badge>
                 </div>
               </div>
@@ -423,6 +437,25 @@ export function AppointmentsManagement() {
               </div>
             )}
 
+       {selectedAppointment.Analysis && selectedAppointment.Analysis.length > 0 && (
+              <div>
+               <Label>{t('appointments.Analysis')}</Label>
+                <div className="p-3 bg-muted rounded mt-1">
+                  {selectedAppointment.Analysis.map((analysis, index) => (
+                    <div key={index} className="mb-2">
+                      <div className="font-medium">{analysis.name}</div>
+                      {analysis.image_path && (
+                        <img
+                          src={analysis.image_path}
+                          alt={analysis.name}
+                          className="w-20 h-20 object-cover rounded mt-1"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {selectedAppointment.medicines && selectedAppointment.medicines.length > 0 && (
               <div>
                <Label>{t('appointments.prescribedMedicines')}</Label>

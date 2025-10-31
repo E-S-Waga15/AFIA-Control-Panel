@@ -3,6 +3,8 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { fetchPharmacyReview, openReviewModal, closeReviewModal } from '../store/slices/pharmacyReviewSlice';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Badge } from './ui/badge';
 import { RTLDialog } from './ui/rtl-dialog';
@@ -50,14 +52,16 @@ export function UserInformation() {
     const { t, isRTL } = useLanguage();
     const navigate = useNavigate();
     const { userId } = useParams();
+    const [searchParams] = useSearchParams();
+    const dispatch = useDispatch();
+    const { userProfile, loading: userProfileLoading, error: userProfileError, success } = useSelector((state: any) => state.userProfile);
+    const { reviewDetails, loading: reviewLoading, error: reviewError, isModalOpen } = useSelector((state: any) => state.pharmacyReview);
     const [appointmentDetails, setAppointmentDetails] = useState<any>(null);
     const [detailsLoading, setDetailsLoading] = useState(false);
     const [detailsError, setDetailsError] = useState<string | null>(null);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
 
-    const dispatch = useDispatch();
-    const { userProfile, loading, error, success } = useSelector((state: any) => state.userProfile);
     const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
     useEffect(() => {
         if (userId) {
@@ -164,19 +168,26 @@ export function UserInformation() {
         setDetailsError(null);
     };
 
-    const formatDate = (dateString) => {
-        if (!dateString) return '-';
-        return new Date(dateString).toLocaleDateString('en-GB');
-    };
+    const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const dayNames = isRTL
+      ? ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
+      : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    const dayName = dayNames[date.getDay()];
+    const fullDate =  new Date(dateStr).toLocaleDateString('en-GB'); // التاريخ بالصيغة الكاملة كما هو مطلوب
+
+    return isRTL ? ` ${fullDate} ${dayName}` : `${fullDate} ${dayName}`;
+  };
 
     const getStatusBadgeProps = (status: AppointmentStatus) => {
         switch (status) {
             case 'upcoming':
-                return { variant: 'default' as const, className: '' };
+                return { variant: 'default' as const, className: 'bg-primary text-white hover:bg-primary' };
             case 'completed':
                 return { variant: 'secondary' as const, className: 'bg-green-600 text-white hover:bg-green-700' };
             case 'canceled':
-                return { variant: 'destructive' as const, className: '' };
+                return { variant: 'destructive' as const, className: 'bg-secondary text-white hover:bg-secondary' };
             default:
                 return { variant: 'outline' as const, className: '' };
         }
@@ -184,7 +195,7 @@ export function UserInformation() {
 
 
 
-    if (loading) {
+    if (userProfileLoading) {
         return (
             <div className="flex justify-center items-center min-h-screen" dir="rtl">
                 <div className="text-center">
@@ -195,12 +206,12 @@ export function UserInformation() {
         );
     }
 
-    if (error) {
+    if (userProfileError) {
         return (
             <div className="flex justify-center items-center min-h-screen" dir="rtl">
                 <div className="text-center">
                     <p className="text-red-500 mb-4">حدث خطأ أثناء تحميل البيانات</p>
-                    <p className="text-muted-foreground text-sm">{error}</p>
+                    <p className="text-muted-foreground text-sm">{userProfileError}</p>
                 </div>
             </div>
         );
@@ -499,12 +510,12 @@ export function UserInformation() {
                             </div>
                         )}
 
-                    {/* Medications Table - For Patient Only */}
+                    {/* Pharmacy Reviews Table - For Patient Only */}
                     {displayAccountType === 'patient' && selectedUser.medications && selectedUser.medications.length > 0 && (
                         <div className="mb-8">
                             <h3 className="font-semibold text-primary my-3 py-3 border-t-2 border-b-2 text-right"
                                 style={{ borderColor: '#1e3561', borderTopWidth: '2px', borderBottomWidth: '2px' }}>
-                                الأدوية المصروفة من الصيدلية ({selectedUser.medications.length} دواء)
+                                مراجعات الصيدلية ({selectedUser.medications.length} مراجعة)
                             </h3>
                             <div className="border rounded-lg overflow-hidden">
                                 <div className="overflow-x-auto">
@@ -512,28 +523,43 @@ export function UserInformation() {
                                         <TableHeader>
                                             <TableRow className="bg-secondary hover:bg-secondary">
                                                 <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-1 w-6 sequential-number-cell">#</TableHead>
-                                                <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">اسم الدواء</TableHead>
-                                                <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">الكمية</TableHead>
                                                 <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">الصيدلية</TableHead>
                                                 <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">الصيدلي</TableHead>
                                                 <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">التاريخ</TableHead>
+                                                <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">التفاصيل</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {selectedUser.medications.map((medication, index) => {
-                                                return (
-                                                    <TableRow key={medication.id || index} className={index % 2 === 0 ? 'bg-accent/30' : ''}>
-                                                        <TableCell className="font-semibold text-center text-xs sm:text-sm py-2 sm:py-1 w-6 sequential-number-cell">{index + 1}</TableCell>
-                                                        <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-1 px-1 sm:px-3">{medication.name || medication.medicationName || 'غير محدد'}</TableCell>
-                                                        <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-1 px-1 sm:px-3">{medication.quantity || 'غير محدد'}</TableCell>
-                                                        <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-1 px-1 sm:px-3">{medication.pharmacyName || medication.pharmacy_name || 'غير محدد'}</TableCell>
-                                                        <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-1 px-1 sm:px-3">{medication.dispensedBy || medication.pharmacistName || 'غير محدد'}</TableCell>
-                                                        <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-1 px-1 sm:px-3" dir="ltr">
-                                                            {medication.date ? new Date(medication.date).toLocaleDateString('en-GB') : 'غير محدد'}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                );
-                                            })}
+                                            {selectedUser.medications.map((medication, index) => (
+                                                <TableRow key={medication.id || index} className={index % 2 === 0 ? 'bg-accent/30' : ''}>
+                                                    <TableCell className="font-semibold text-center text-xs sm:text-sm py-2 sm:py-1 w-6 sequential-number-cell">
+                                                        {index + 1}
+                                                    </TableCell>
+                                                    <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-1 px-1 sm:px-3">
+                                                        {medication.pharmacyName || medication.pharmacy_name || 'غير محدد'}
+                                                    </TableCell>
+                                                    <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-1 px-1 sm:px-3">
+                                                        {medication.dispensedBy || medication.pharmacistName || 'غير محدد'}
+                                                    </TableCell>
+                                                    <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-1 px-1 sm:px-3" dir="ltr">
+                                                        {medication.date ? new Date(medication.date).toLocaleDateString('en-GB') : 'غير محدد'}
+                                                    </TableCell>
+                                                    <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-1 px-1 sm:px-3">
+                                                        <Button 
+                                                            variant="outline" 
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                dispatch(fetchPharmacyReview(medication.id));
+                                                                dispatch(openReviewModal());
+                                                            }}
+                                                            className="h-8 text-xs"
+                                                        >
+                                                               <FileText className="w-3 h-3" />
+                                                                        {isMobile ? <></> : <span className="sm:hidden">عرض التفاصيل</span>}
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
                                         </TableBody>
                                     </Table>
                                 </div>
@@ -541,12 +567,12 @@ export function UserInformation() {
                         </div>
                     )}
 
-                    {/* Dispensed Medications Table - For Pharmacist Only */}
+                    {/* Pharmacy Dispensing Records - For Pharmacist Only */}
                     {displayAccountType === 'pharmacist' && selectedUser.records && selectedUser.records.length > 0 && (
                         <div className="mb-8">
-                            <h3 className="font-semibold text-primary mb-3 py-3  border-t-2 border-b-2 text-center"
+                            <h3 className="font-semibold text-primary mb-3 py-3 border-t-2 border-b-2 text-center"
                                 style={{ borderColor: '#1e3561', borderTopWidth: '2px', borderBottomWidth: '2px' }}>
-                                الأدوية المصروفة للمرضى ({selectedUser.records.length} صرفية)
+                                سجل مراجعات الصيدلية ({selectedUser.records.length} مراجعة)
                             </h3>
                             <div className="border rounded-lg overflow-hidden">
                                 <div className="overflow-x-auto">
@@ -554,26 +580,39 @@ export function UserInformation() {
                                         <TableHeader>
                                             <TableRow className="bg-primary hover:bg-primary">
                                                 <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 w-6 sequential-number-cell">#</TableHead>
-                                                <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">اسم الدواء</TableHead>
                                                 <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">اسم المريض</TableHead>
-                                                <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">الكمية</TableHead>
                                                 <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">التاريخ</TableHead>
+                                                <TableHead className="text-white text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">التفاصيل</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {selectedUser.records.map((record, index) => {
-                                                return (
-                                                    <TableRow key={record.id || index} className={index % 2 === 0 ? 'bg-accent/30' : ''}>
-                                                        <TableCell className="font-semibold text-center text-xs sm:text-sm py-1 sm:py-1 w-6 sequential-number-cell">{index + 1}</TableCell>
-                                                        <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">{record.medicationName || record.name || 'غير محدد'}</TableCell>
-                                                        <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">{record.patientName || record.patient_name || 'غير محدد'}</TableCell>
-                                                        <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">{record.quantity || 'غير محدد'}</TableCell>
-                                                        <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3" dir="ltr">
-                                                            {record.date ? new Date(record.date).toLocaleDateString('en-GB') : 'غير محدد'}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                );
-                                            })}
+                                            {selectedUser.records.map((record, index) => (
+                                                <TableRow key={record.id || index} className={index % 2 === 0 ? 'bg-accent/30' : ''}>
+                                                    <TableCell className="font-semibold text-center text-xs sm:text-sm py-1 sm:py-1 w-6 sequential-number-cell">
+                                                        {index + 1}
+                                                    </TableCell>
+                                                    <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">
+                                                        {record.patientName || record.patient_name || 'غير محدد'}
+                                                    </TableCell>
+                                                    <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3" dir="ltr">
+                                                        {record.date ? new Date(record.date).toLocaleDateString('en-GB') : 'غير محدد'}
+                                                    </TableCell>
+                                                    <TableCell className="text-center text-xs sm:text-sm py-1 sm:py-3 px-1 sm:px-3">
+                                                        <Button 
+                                                            variant="outline" 
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                dispatch(fetchPharmacyReview(record.id));
+                                                                dispatch(openReviewModal());
+                                                            }}
+                                                            className="h-8 text-xs"
+                                                        >
+                                                           <FileText className="w-3 h-3" />
+                                                                        {isMobile ? <></> : <span className="sm:hidden">عرض التفاصيل</span>}
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
                                         </TableBody>
                                     </Table>
                                 </div>
@@ -593,9 +632,122 @@ export function UserInformation() {
 
                     {displayAccountType === 'pharmacist' && (!selectedUser.records || selectedUser.records.length === 0) && (
                         <div className="text-center py-8 sm:py-12 bg-accent/30 rounded-lg">
-                            <p className="text-muted-foreground text-sm sm:text-base">لا توجد أدوية مصروفة مسجلة</p>
+                            <p className="text-muted-foreground text-sm sm:text-base">لا توجد مراجعات مسجلة</p>
                         </div>
                     )}
+
+                    {/* Pharmacy Review Details Modal */}
+                    <RTLDialog 
+                        open={isModalOpen} 
+                        onOpenChange={(open) => {
+                            if (!open) {
+                                dispatch(closeReviewModal());
+                            }
+                        }}
+                        title="تفاصيل المراجعة"
+                      
+                          maxWidth={isMobile ? "w-300px" : "max-w-4xl"}
+                    >
+                        {reviewLoading ? (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Skeleton className="h-4 w-20 mb-2" />
+                                        <Skeleton className="h-6 w-full" />
+                                    </div>
+                                    <div>
+                                        <Skeleton className="h-4 w-20 mb-2" />
+                                        <Skeleton className="h-6 w-full" />
+                                    </div>
+                                    <div>
+                                        <Skeleton className="h-4 w-20 mb-2" />
+                                        <Skeleton className="h-6 w-full" />
+                                    </div>
+                                    <div>
+                                        <Skeleton className="h-4 w-20 mb-2" />
+                                        <Skeleton className="h-6 w-full" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <Skeleton className="h-6 w-32 mb-2" />
+                                    <div className="space-y-2">
+                                        {[1, 2, 3].map((i) => (
+                                            <div key={i} className="flex justify-between p-2 border rounded">
+                                                <Skeleton className="h-4 w-24" />
+                                                <Skeleton className="h-4 w-8" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : reviewError ? (
+                            <div className="py-8 text-center text-destructive">
+                                <p>{reviewError}</p>
+                            </div>
+                        ) : reviewDetails ? (
+                                <div className="space-y-4 py-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-500">رقم المراجعة</p>
+                                            <p className="text-sm">{reviewDetails.id}</p>
+                                        </div>
+                                        <div>
+                                             <Label>اسم المريض</Label>
+                                           <div className="p-2 bg-muted rounded mt-1 text-sm sm:text-base">{reviewDetails.patient}</div>
+                                        </div>
+                                        <div>
+                                            <Label>اسم الصيدلي</Label>
+                                          <div className="p-2 bg-muted rounded mt-1 text-sm sm:text-base">{reviewDetails.pharmacist}</div>
+                                        </div>
+                                        <div>
+                                            <Label>تاريخ المراجعة</Label>
+                                          <div className="p-2 bg-muted rounded mt-1 text-sm sm:text-base">{formatDate(reviewDetails.created_at)}</div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-6">
+                                        <h4 className="font-medium mb-2">الأدوية المصروفة:</h4>
+                                        <div className="border rounded-lg overflow-hidden">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead className="text-right">اسم الدواء</TableHead>
+                                                        <TableHead className="text-center">الكمية</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {reviewDetails.medicines && reviewDetails.medicines.length > 0 ? (
+                                                        reviewDetails.medicines.map((medicine, index) => (
+                                                            <TableRow key={index}>
+                                                                <TableCell className="text-right">{medicine.name}</TableCell>
+                                                                <TableCell className="text-center">{medicine.quantity_dispensed}</TableCell>
+                                                            </TableRow>
+                                                        ))
+                                                    ) : (
+                                                        <TableRow>
+                                                            <TableCell colSpan={2} className="text-center py-4 text-muted-foreground">
+                                                                لا توجد أدوية مسجلة
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    )}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Close Button */}
+                                    <div className="flex justify-end pt-4 border-t mt-6">
+                                        <Button 
+                                            variant="outline" 
+                                            onClick={() => dispatch(closeReviewModal())}
+                                            className="px-6"
+                                        >
+                                            إغلاق
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : null}
+                    </RTLDialog>
 
                     {/* Document Footer */}
                     <div className="mt-8 pt-4 border-t text-center text-xs text-muted-foreground">
@@ -685,10 +837,10 @@ export function UserInformation() {
                             </div>
                         )}
 
-                        {/* التحاليل الطبية */}
+                   
                         {selectedAppointment.diagnostics && (
                             <div>
-                                <Label>التحاليل الطبية</Label>
+                                <Label>{t('appointments.diagnostics')}</Label>
                                 <div className="p-3 bg-muted rounded mt-1">
                                     {Array.isArray(selectedAppointment.diagnostics) ? (
                                         selectedAppointment.diagnostics.map((diagnostic, index) => (
@@ -712,7 +864,25 @@ export function UserInformation() {
                                 </div>
                             </div>
                         )}
-
+                        {selectedAppointment.Analysis && selectedAppointment.Analysis.length > 0 && (
+                            <div>
+                                <Label>{t('appointments.Analysis')}</Label>
+                                <div className="p-3 bg-muted rounded mt-1">
+                                    {selectedAppointment.Analysis.map((analysis, index) => (
+                                        <div key={index} className="mb-2">
+                                            <div className="font-medium">{analysis.name}</div>
+                                            {analysis.image_path && (
+                                                <img
+                                                    src={analysis.image_path}
+                                                    alt={analysis.name}
+                                                    className="w-20 h-20 object-cover rounded mt-1"
+                                                />
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         {/* الأدوية الموصوفة */}
                         {selectedAppointment.medicines && (
                             <div>
@@ -932,8 +1102,8 @@ export function UserInformation() {
 
           /* تحسين المساحات في الطباعة */
           .py-2, .py-3 {
-            padding-top: 6px !important;
-            padding-bottom: 6px !important;
+            padding-top: 10px !important;
+            padding-bottom: 10px !important;
           }
         }
       `}</style>

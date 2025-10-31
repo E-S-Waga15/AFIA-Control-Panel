@@ -151,6 +151,7 @@
     "errorLoading": "Error loading appointments",
     "specialization": "Specialization",
     "diagnostics": "Diagnostics",
+     "Analysis":"Analysis",
     "prescribedMedicines": "Prescribed Medicines",
     "units": "units",
     "taken": "taken"

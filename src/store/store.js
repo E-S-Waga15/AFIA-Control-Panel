@@ -14,6 +14,7 @@ import dashboardReducer from './slices/dashboardSlice';
 import userEditReducer from './slices/userEditSlice';
 import adminReducer from './slices/adminSlice';
 import adminsDisplayReducer from './slices/adminsDisplaySlice';
+import pharmacyReviewReducer from './slices/pharmacyReviewSlice';
 
 const store = configureStore({
     reducer: {
@@ -32,6 +33,7 @@ const store = configureStore({
         dashboard: dashboardReducer,
         admin: adminReducer,
         adminsDisplay: adminsDisplayReducer,
+        pharmacyReview: pharmacyReviewReducer,
     },
 });
 
