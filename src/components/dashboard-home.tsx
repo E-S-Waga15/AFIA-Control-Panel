@@ -275,7 +275,7 @@ export function DashboardHome() {
           <Button 
             onClick={() => {
               const link = document.createElement('a');
-              link.href = 'http://192.168.1.6:8000/api/generate-report';
+              link.href = 'https://afia.medlifesy.org/public/api/generate-report';
               link.download = 'report.xlsx';
               document.body.appendChild(link);
               link.click();
